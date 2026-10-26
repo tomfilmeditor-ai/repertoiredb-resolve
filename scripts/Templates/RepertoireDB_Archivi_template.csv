@@ -1,0 +1,31 @@
+Name,Model,Rate (EUR),Block (sec),Threshold 1 (sec),Discount 1 (%),Type 1,Threshold 2 (sec),Discount 2 (%),Type 2,Threshold 3 (sec),Discount 3 (%),Type 3
+# ELENCO DI PARTENZA — LE TARIFFE SONO DA COMPILARE
+#
+# I nomi degli archivi piu usati nel documentario sono precompilati, con il
+# modello di prezzo che usano di solito. Le tariffe sono a zero: ogni archivio
+# le negozia per progetto, per territorio e per tipo di utilizzo, quindi non
+# esiste un prezzo di listino valido per tutti.
+#
+# Come usarlo:
+#   1. Importa questo file nel Config ("Importa JSON/CSV...")
+#   2. Inserisci le tariffe che hai ottenuto tu, archivio per archivio
+#   3. Aggiungi gli scaglioni di sconto che hai concordato
+#
+# Attenzione: molti archivi hanno costi fissi per ordine (consegna, pratiche
+# amministrative, FTP) che questo strumento NON calcola. Vanno aggiunti a mano
+# al preventivo finale.
+#
+# Le colonne di sconto si ripetono in gruppi di tre (soglia, percentuale, tipo)
+# e sono illimitate: vedi la sezione FORMATO CSV del manuale.
+Istituto Luce,Al minuto,0
+Agenzia Reuters,Al minuto,0
+Associated Press,Al minuto,0
+AAMOD,Al minuto,0
+RSI,Al minuto,0
+RAI COM,Al minuto,0
+INA,Al secondo,0
+INA (no theatrical),Al secondo,0
+Cinema Impresa,Al minuto,0
+ZDF,Al minuto,0
+RTS,Al minuto,0
+SRF,Al minuto,0

@@ -1,0 +1,28 @@
+﻿Name,Model,Rate (EUR),Block (sec),Threshold 1,Discount 1 (%),Type 1,Threshold 2,Discount 2 (%),Type 2
+Banca VIDEO Esempio 01,A clip,5300.00,,,,,,
+Banca VIDEO Esempio 02,A clip,5300.00,,3,15,flat,,,
+Banca VIDEO Esempio 03,A clip,5300.00,,3,15,flat,8,25,flat
+Banca VIDEO Esempio 04,A clip,5300.00,,3,20,progressive,,,
+Banca VIDEO Esempio 05,A clip,5300.00,,3,10,flat,8,20,progressive
+Banca VIDEO Esempio 06,Al secondo,8.50,,,,,,
+Banca VIDEO Esempio 07,Al secondo,8.50,,180,15,flat,,,
+Banca VIDEO Esempio 08,Al secondo,8.50,,180,20,progressive,,,
+Banca VIDEO Esempio 09,Al secondo,8.50,,120,10,flat,600,25,flat
+Banca VIDEO Esempio 10,Al secondo,8.50,,120,15,progressive,600,30,progressive
+Banca VIDEO Esempio 11,Al secondo,8.50,,120,10,flat,360,20,progressive
+Banca VIDEO Esempio 12,Al minuto,250.00,,,,,,
+Banca VIDEO Esempio 13,Al minuto,250.00,,180,15,flat,,,
+Banca VIDEO Esempio 14,Al minuto,250.00,,180,20,progressive,,,
+Banca VIDEO Esempio 15,Al minuto,250.00,,180,10,flat,600,25,flat
+Banca VIDEO Esempio 16,Al minuto,250.00,,180,15,progressive,600,30,progressive
+Banca VIDEO Esempio 17,Al minuto,250.00,,180,10,flat,360,20,progressive
+Banca VIDEO Esempio 18,A blocchi (custom),50.00,30,,,,,
+Banca VIDEO Esempio 19,A blocchi (custom),50.00,30,180,15,flat,,,
+Banca VIDEO Esempio 20,A blocchi (custom),50.00,30,180,20,progressive,,,
+Banca VIDEO Esempio 21,A blocchi (custom),50.00,30,180,10,flat,600,25,flat
+Banca VIDEO Esempio 22,A blocchi (custom),50.00,30,180,15,progressive,600,30,progressive
+Banca VIDEO Esempio 23,A blocchi (custom),50.00,30,180,10,flat,360,20,progressive
+Banca VIDEO Esempio 24,A blocchi (custom),90.00,60,,,,,
+Banca VIDEO Esempio 25,A blocchi (custom),90.00,60,180,15,flat,,,
+Banca VIDEO Esempio 26,A blocchi (custom),90.00,60,180,20,progressive,,,
+Banca VIDEO Esempio 27,A blocchi (custom),90.00,60,180,10,flat,600,25,progressive

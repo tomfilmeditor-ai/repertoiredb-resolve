@@ -1,0 +1,63 @@
+﻿# ===================================================================
+# RepertoireDB — LEGENDA COMPLETA
+# © Tommaso Feraboli Film Editor — CC BY-NC-SA 4.0
+# ===================================================================
+# Questo file descrive ogni colonna e ogni valore ammesso.
+# Non è importabile direttamente: serve solo come riferimento.
+# ===================================================================
+
+COLONNA,VALORI AMMESSI,OBBLIGATORIO,NOTE
+Name,"Testo libero — univoco, case-sensitive. Es: Getty Images",SI,"Deve essere identico al nome inserito nel campo Keywords delle clip nel Media Pool"
+Model,"A clip | Al secondo | Al minuto | A blocchi (custom)",SI,"Per Fotografie e Giornali il modello è sempre ""A clip"" (impostato automaticamente dal Config)"
+Rate (EUR),Numero decimale con punto. Es: 5300.00 | 8.50 | 250.00,SI,Tariffa in euro per singola unità del modello scelto
+Block (sec),"Numero intero. Es: 30 | 60 | 120",Solo per A blocchi,Durata in secondi di ogni blocco. Ignorato per tutti gli altri modelli. Lasciare vuoto se non usato.
+Threshold N,"Numero intero — significato DIPENDE DAL MODELLO (vedi sotto)",NO,Se assente nessuno sconto viene applicato
+Discount N (%),"Numero intero — percentuale. Es: 10 | 15 | 25",NO (SI se Threshold N è presente),Percentuale di sconto da applicare al superamento della soglia N
+Type N,"flat | progressive",NO (SI se Threshold N è presente),"flat = percentuale sull'intero importo della banca; progressive = solo sulla parte eccedente la soglia (per ""A clip"" i due tipi si comportano allo stesso modo). Non case-sensitive: FLAT e Flat sono equivalenti. Qualsiasi stringa contenente ""prog"" = progressivo."
+
+# ===================================================================
+# THRESHOLD — UNITÀ DI MISURA PER MODELLO
+# ===================================================================
+
+MODELLO,UNITÀ SOGLIA,ESEMPIO,LETTURA
+A clip,Numero di clip uniche,"3","Lo sconto si attiva se in timeline ci sono > 3 file sorgente unici di questa banca"
+Al secondo,Secondi totali sorgente,"180","Lo sconto si attiva se la durata sorgente totale unica supera 180 secondi (3 minuti)"
+Al minuto,Secondi totali sorgente,"180","Lo sconto si attiva se la durata sorgente totale unica supera 180 secondi (3 minuti)"
+A blocchi (custom),Secondi totali sorgente,"180","Lo sconto si attiva se la durata sorgente totale unica supera 180 secondi (3 minuti)"
+
+# ===================================================================
+# MODELLI — LOGICA DI CALCOLO
+# ===================================================================
+
+MODELLO,FORMULA COSTO BASE,ARROTONDAMENTO,USO TIPICO
+A clip,rate × 1 per ogni file sorgente unico in timeline,Nessuno,"Archivi con tariffa fissa per titolo: Getty Images, AP Archive, Fotografie, Giornali"
+Al secondo,rate × secondi sorgente unici,Ceil al secondo superiore. Es: 61.3s → 62s,"Archivi con tariffa a tempo: Shutterstock video, pond5"
+Al minuto,rate × minuti sorgente unici,Ceil al minuto superiore. Es: 2m10s → 3min,"Archivi con tariffazione al minuto: emittenti TV, RSI, RAI Teche"
+A blocchi (custom),rate × numero di blocchi da Block(sec) secondi,Ceil al blocco superiore. Es: blocchi 30s — 61s → 3 blocchi,"Archivi con tariffa a fasce personalizzate"
+
+# ===================================================================
+# SCONTI — LOGICA DI APPLICAZIONE
+# ===================================================================
+
+TIPO,MODELLO,FORMULA,ESEMPIO
+flat,A clip,"sconto_importo = costBase × pct/100 applicato sull'intero importo se clip_count > threshold_clips","Getty 5300€/clip — 5 clip = 26500€ — sconto flat 15% oltre 3 clip → 26500 × 0.85 = 22525€"
+flat,Al secondo/Al minuto/A blocchi,"sconto_importo = costBase × pct/100 applicato sull'intero importo se tot_sec > threshold_sec","250€/min — 3 min = 750€ — sconto flat 20% oltre 2min → 750 × 0.80 = 600€"
+progressive,A clip,"identico a flat (il costo per clip è discreto e non frazionabile)","Stessa formula del flat"
+progressive,Al secondo,"solo i secondi eccedenti la soglia vengono fatturati a tariffa ridotta","8.50€/s — 4 min (240s) — prog 20% oltre 3 min → (180s × 8.50€) + (60s × 6.80€) = 1938€"
+progressive,Al minuto,"solo i minuti eccedenti la soglia vengono fatturati a tariffa ridotta","250€/min — 4 min — prog 20% oltre 3 min → (3min × 250€) + (1min × 200€) = 950€"
+progressive,A blocchi,"solo i blocchi eccedenti la soglia vengono fatturati a tariffa ridotta","50€/blocco30s — 5 blocchi — prog 20% oltre 3 blocchi → (3×50€) + (2×40€) = 230€"
+
+# ===================================================================
+# REGOLE GENERALI
+# ===================================================================
+
+REGOLA,DETTAGLIO
+Separatore,Virgola (,) oppure punto e virgola (;) — rilevato automaticamente
+Decimali,Solo punto (.) — non virgola. Corretto: 5300.00 — Errato: 5300,00
+Prima riga,Intestazione — ignorata durante l'importazione. Non modificare i nomi delle colonne.
+Righe commento,Righe che iniziano con # — ignorate durante l'importazione
+Righe vuote,Ignorate
+Duplicati,"Se una banca con lo stesso nome esiste già nel DB, la modalità di importazione scelta determina se viene sovrascritta (Aggiorna) o saltata (Aggiungi)"
+mediaType,"Il campo ""Tipo media"" (Video / Fotografie / Giornali) non è presente nel CSV — dopo l'importazione va impostato manualmente nel Config per le banche Fotografie e Giornali. Le banche importate da CSV sono trattate come Video per default."
+Sconti multipli,Massimo 2 soglie nel CSV standard. Le soglie devono essere in ordine crescente. Solo la soglia più alta raggiunta viene applicata — non si sommano.
+Sconti A clip,"Per ""A clip"" la soglia è un numero di clip. Per tutti gli altri modelli la soglia è in secondi."

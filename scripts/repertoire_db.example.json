@@ -1,0 +1,40 @@
+[
+  {
+    "name": "Example Archive (per second)",
+    "mediaType": "Video",
+    "model": "Al secondo",
+    "rate": 50
+  },
+  {
+    "name": "Example Archive (per minute)",
+    "mediaType": "Video",
+    "model": "Al minuto",
+    "rate": 3000,
+    "utilMin": 30
+  },
+  {
+    "name": "Example Archive (with discount)",
+    "mediaType": "Video",
+    "model": "Al secondo",
+    "rate": 80,
+    "discounts": [
+      {
+        "type": "flat",
+        "pct": 15,
+        "threshold_sec": 300
+      }
+    ]
+  },
+  {
+    "name": "Example Photo Library",
+    "mediaType": "Fotografie",
+    "model": "A clip",
+    "rate": 120
+  },
+  {
+    "name": "Example Newspaper Archive",
+    "mediaType": "Giornali",
+    "model": "Forfait",
+    "rate": 500
+  }
+]

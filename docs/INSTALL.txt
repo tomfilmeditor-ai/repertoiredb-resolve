@@ -1,0 +1,300 @@
+===============================================================================
+  RepertoireDB 1.2.13 — Installation Guide / Guida all'installazione
+  Tommaso Feraboli — Film Editor
+===============================================================================
+
+  English ......... see below
+  Italiano ........ scroll down to "ITALIANO"
+
+
+===============================================================================
+  ENGLISH
+===============================================================================
+
+-------------------------------------------------------------------------------
+BEFORE YOU START
+-------------------------------------------------------------------------------
+
+  *** RepertoireDB REQUIRES DaVinci Resolve STUDIO ***
+
+  Since Resolve 19.1, the scripting interface these tools are built on
+  (UIManager) is Studio-only. With the free version of Resolve the scripts
+  will not open at all.
+
+You also need:
+
+  * DaVinci Resolve Studio 19 or 20, already installed
+  * Only for Excel (.xlsx) export: Python 3 with openpyxl. Not needed for
+    normal use or for CSV export — and there is a helper script that sets it
+    up for you later (RepertoireDB_Installer.lua).
+
+Close DaVinci Resolve before installing. Reopen it when you are done.
+
+
+-------------------------------------------------------------------------------
+macOS
+-------------------------------------------------------------------------------
+
+File to use:  RepertoireDB_1.2.13_Install_macOS.command
+
+  1. RIGHT-CLICK the file, then choose "Open".
+     Do NOT double-click it.
+
+     Why: the installer is not signed with an Apple developer certificate,
+     so a normal double-click is blocked with a message about an
+     "unidentified developer". Right-click > Open gives you a dialog with
+     an "Open" button, which a double-click does not.
+
+  2. In the dialog that appears, click "Open".
+     A Terminal window opens and shows what is happening.
+
+  3. When you read "Fatto", press ENTER to close.
+
+Where it installs — note that it is TWO different folders:
+
+  Scripts:
+    ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
+      Fusion/Scripts/Comp/RepertoireDB/
+
+  Shared modules (LogManager, BugReportDialog):
+    ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
+      Fusion/Modules/Lua/
+
+  The second folder is not optional: Resolve looks for modules only there.
+  If they end up with the scripts, the scripts will not start.
+
+
+-------------------------------------------------------------------------------
+WINDOWS
+-------------------------------------------------------------------------------
+
+File to use:  RepertoireDB_1.2.13_Install_Windows.cmd
+
+  1. DOUBLE-CLICK the file.
+
+     If Windows SmartScreen shows a blue warning window
+     ("Windows protected your PC"), click "More info", then "Run anyway".
+     This happens because the installer is not signed.
+
+  2. A command window opens and shows what is happening.
+
+  3. When you read "Fatto", press a key to close.
+
+Where it installs:
+
+  Scripts, in whichever of these two folders already exists on your PC:
+    %APPDATA%\Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Comp\RepertoireDB\
+    %APPDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Scripts\Comp\RepertoireDB\
+
+  Shared modules:
+    %APPDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Modules\Lua\
+
+
+-------------------------------------------------------------------------------
+AFTER INSTALLATION
+-------------------------------------------------------------------------------
+
+Open DaVinci Resolve, open a project, then:
+
+    Workspace  >  Scripts  >  Comp  >  RepertoireDB_Config
+
+Start there: Config is where you enter your archive libraries and their
+rates. Then tag your clips, and use RepertoireDB_Calculator on a timeline.
+
+The full manual is RepertoireDB_README.txt, installed alongside the scripts.
+The 📖 button inside each script opens it.
+
+
+-------------------------------------------------------------------------------
+IF SOMETHING GOES WRONG
+-------------------------------------------------------------------------------
+
+"Nothing appears in the Scripts menu"
+    Resolve reads that folder when it starts: quit Resolve completely and
+    reopen it. On Windows, if it still does not appear, the files may have
+    gone to the other of the two folders listed above.
+
+"module 'LogManager' not found"
+    The two shared modules are not in Fusion/Modules/Lua. This is the one
+    mistake the installer exists to prevent — if you installed by hand,
+    move LogManager.lua and BugReportDialog.lua there.
+
+"The scripts do not open at all"
+    Check you are on Resolve **Studio**. The free version cannot run them.
+
+"Excel export does nothing"
+    Python 3 with openpyxl is missing. Run RepertoireDB_Installer.lua from
+    Workspace > Scripts: it checks and installs what is needed. CSV export
+    works without it.
+
+Log file, useful to attach to a bug report:
+    macOS:   ~/Library/Logs/RepertoireDB/repertoire_db.log
+    Windows: %LOCALAPPDATA%\Blackmagic Design\DaVinci Resolve\Logs\RepertoireDB\
+
+
+-------------------------------------------------------------------------------
+UPDATING AND UNINSTALLING
+-------------------------------------------------------------------------------
+
+To update: run the new installer. It replaces the scripts and **never
+overwrites your own data**:
+
+    repertoire_db.json   your archive libraries and rates
+    memories/            your saved configurations
+
+No need to remove the old version first.
+
+To uninstall: delete the RepertoireDB folder from the Scripts location, and
+LogManager.lua + BugReportDialog.lua from Fusion/Modules/Lua. Keep a copy of
+repertoire_db.json first if you want to keep your rates.
+
+
+===============================================================================
+  ITALIANO
+===============================================================================
+
+-------------------------------------------------------------------------------
+PRIMA DI INIZIARE
+-------------------------------------------------------------------------------
+
+  *** RepertoireDB RICHIEDE DaVinci Resolve STUDIO ***
+
+  Dalla versione 19.1 di Resolve, l'interfaccia grafica su cui sono
+  costruiti questi strumenti (UIManager) è disponibile solo nella versione
+  Studio. Con Resolve gratuito gli script non si aprono affatto.
+
+Ti serve anche:
+
+  * DaVinci Resolve Studio 19 o 20, già installato
+  * Solo per l'esportazione in Excel (.xlsx): Python 3 con openpyxl. Non
+    serve per l'uso normale né per l'esportazione CSV — e c'è uno script
+    che lo prepara dopo (RepertoireDB_Installer.lua).
+
+Chiudi DaVinci Resolve prima di installare. Riaprilo quando hai finito.
+
+
+-------------------------------------------------------------------------------
+macOS
+-------------------------------------------------------------------------------
+
+File da usare:  RepertoireDB_1.2.13_Install_macOS.command
+
+  1. CLIC DESTRO sul file, poi "Apri".
+     NON fare doppio clic.
+
+     Perché: l'installer non è firmato con un certificato Apple, quindi il
+     doppio clic viene bloccato con un messaggio su uno "sviluppatore non
+     identificato". Il clic destro > Apri fa comparire una finestra con il
+     pulsante "Apri", che con il doppio clic non appare.
+
+  2. Nella finestra che compare, clicca "Apri".
+     Si apre il Terminale e mostra cosa sta facendo.
+
+  3. Quando leggi "Fatto", premi INVIO per chiudere.
+
+Dove installa — sono DUE cartelle diverse:
+
+  Script:
+    ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
+      Fusion/Scripts/Comp/RepertoireDB/
+
+  Moduli condivisi (LogManager, BugReportDialog):
+    ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
+      Fusion/Modules/Lua/
+
+  La seconda cartella non è un dettaglio: Resolve cerca i moduli solo lì.
+  Se finiscono insieme agli script, gli script non partono.
+
+
+-------------------------------------------------------------------------------
+WINDOWS
+-------------------------------------------------------------------------------
+
+File da usare:  RepertoireDB_1.2.13_Install_Windows.cmd
+
+  1. DOPPIO CLIC sul file.
+
+     Se Windows SmartScreen mostra una finestra blu di avviso
+     ("Windows ha protetto il PC"), clicca "Ulteriori informazioni" e poi
+     "Esegui comunque". Succede perché l'installer non è firmato.
+
+  2. Si apre una finestra dei comandi con l'avanzamento.
+
+  3. Quando leggi "Fatto", premi un tasto per chiudere.
+
+Dove installa:
+
+  Script, in quella delle due cartelle che esiste già sul PC:
+    %APPDATA%\Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Comp\RepertoireDB\
+    %APPDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Scripts\Comp\RepertoireDB\
+
+  Moduli condivisi:
+    %APPDATA%\Blackmagic Design\DaVinci Resolve\Fusion\Modules\Lua\
+
+
+-------------------------------------------------------------------------------
+DOPO L'INSTALLAZIONE
+-------------------------------------------------------------------------------
+
+Apri DaVinci Resolve, apri un progetto, poi:
+
+    Workspace  >  Scripts  >  Comp  >  RepertoireDB_Config
+
+Parti da lì: Config è dove inserisci le banche dati e le loro tariffe. Poi
+tagghi le clip e usi RepertoireDB_Calculator su una timeline.
+
+Il manuale completo è RepertoireDB_README.txt, installato insieme agli
+script. Il pulsante 📖 dentro ogni script lo apre.
+
+
+-------------------------------------------------------------------------------
+SE QUALCOSA NON FUNZIONA
+-------------------------------------------------------------------------------
+
+"Non compare nulla nel menu Scripts"
+    Resolve legge quella cartella all'avvio: chiudi Resolve completamente e
+    riaprilo. Su Windows, se ancora non compare, i file potrebbero essere
+    finiti nell'altra delle due cartelle indicate sopra.
+
+"module 'LogManager' not found"
+    I due moduli condivisi non sono in Fusion/Modules/Lua. È l'errore che
+    l'installer esiste per evitare — se hai installato a mano, sposta lì
+    LogManager.lua e BugReportDialog.lua.
+
+"Gli script non si aprono affatto"
+    Verifica di avere Resolve **Studio**. La versione gratuita non può
+    eseguirli.
+
+"L'esportazione Excel non fa niente"
+    Manca Python 3 con openpyxl. Lancia RepertoireDB_Installer.lua da
+    Workspace > Scripts: verifica e installa quello che serve.
+    L'esportazione CSV funziona anche senza.
+
+File di log, utile da allegare a una segnalazione:
+    macOS:   ~/Library/Logs/RepertoireDB/repertoire_db.log
+    Windows: %LOCALAPPDATA%\Blackmagic Design\DaVinci Resolve\Logs\RepertoireDB\
+
+
+-------------------------------------------------------------------------------
+AGGIORNARE E DISINSTALLARE
+-------------------------------------------------------------------------------
+
+Per aggiornare: lancia il nuovo installer. Sostituisce gli script e **non
+sovrascrive mai i tuoi dati**:
+
+    repertoire_db.json   le tue banche dati con le tariffe
+    memories/            le configurazioni che hai salvato
+
+Non serve togliere prima la versione vecchia.
+
+Per disinstallare: cancella la cartella RepertoireDB dalla posizione degli
+script, e LogManager.lua + BugReportDialog.lua da Fusion/Modules/Lua. Se
+vuoi conservare le tariffe, mettiti da parte una copia di repertoire_db.json
+prima di cancellare.
+
+
+===============================================================================
+  Bug:      tomfilmeditor.tools@gmail.com
+  Supporto: https://paypal.me/acoffeefortom
+  Licenza:  MIT
+===============================================================================

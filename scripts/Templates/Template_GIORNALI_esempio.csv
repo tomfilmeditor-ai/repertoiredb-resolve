@@ -1,0 +1,12 @@
+﻿Name,Model,Rate (EUR),Block (sec),Threshold 1 (clip),Discount 1 (%),Type 1,Threshold 2 (clip),Discount 2 (%),Type 2
+Banca GIORNALI Esempio 01,A clip,75.00,,,,,,
+Banca GIORNALI Esempio 02,A clip,120.00,,,,,,
+Banca GIORNALI Esempio 03,A clip,350.00,,,,,,
+Banca GIORNALI Esempio 04,A clip,75.00,,3,10,flat,,,
+Banca GIORNALI Esempio 05,A clip,120.00,,3,20,flat,,,
+Banca GIORNALI Esempio 06,A clip,75.00,,3,10,flat,8,20,flat
+Banca GIORNALI Esempio 07,A clip,75.00,,3,10,flat,10,25,flat
+Banca GIORNALI Esempio 08,A clip,120.00,,3,15,flat,20,30,flat
+Banca GIORNALI Esempio 09,A clip,75.00,,3,15,progressive,,,
+Banca GIORNALI Esempio 10,A clip,75.00,,3,10,flat,8,20,progressive
+Banca GIORNALI Esempio 11,A clip,350.00,,3,10,flat,10,25,progressive

@@ -1,0 +1,104 @@
+﻿# ===================================================================
+# RepertoireDB — Template banche dati GIORNALI
+# © Tommaso Feraboli Film Editor — CC BY-NC-SA 4.0
+# ===================================================================
+#
+# ISTRUZIONI
+# ----------
+# 1. Rimuovi le righe che iniziano con # (commenti) prima di importare,
+#    oppure lasciale: vengono ignorate automaticamente.
+# 2. Prima riga con intestazioni: obbligatoria, non modificare i nomi.
+# 3. Separatore: virgola. Decimali: punto (es. 75.00).
+# 4. IMPORTANTE: dopo l'importazione, apri RepertoireDB_Config,
+#    seleziona ogni banca e imposta "Tipo media" = Giornali.
+#    Solo le banche di tipo Giornali accettano file immagine nel tagging.
+#
+# MODELLO UNICO: A CLIP
+# Il modello per i giornali è sempre "A clip": tariffa fissa per
+# ogni file immagine unico (jpg, tiff, png, ecc.) presente in timeline.
+# Un "articolo" corrisponde tipicamente a una singola pagina/ritaglio
+# scansionato importato come file immagine nel Media Pool.
+# Lo stesso file usato più volte in timeline conta come 1 solo articolo.
+#
+# COLONNE
+# -------
+# Name                — nome univoco della banca (case-sensitive)
+# Model               — sempre "A clip" per i giornali
+# Rate (EUR)          — tariffa per singolo articolo/ritaglio unico
+# Block (sec)         — non usato per i giornali (lasciare vuoto)
+# Threshold N (clip)  — numero di articoli unici oltre cui si attiva lo sconto N
+#                       Es.: 3 = lo sconto si applica se in timeline ci sono > 3 articoli unici
+# Discount N (%)      — percentuale di sconto
+# Type N              — flat | progressive
+#                       Su "A clip" flat e progressive producono lo stesso risultato:
+#                       la percentuale si applica sull'intero importo della banca.
+#
+# LOGICA SCONTO
+# -------------
+# La soglia è un numero di clip (articoli unici). Se in timeline compaiono
+# più di N articoli unici di questa banca, lo sconto viene applicato.
+# Viene applicato solo lo scaglione con la soglia più alta raggiunta
+# (gli sconti non si sommano).
+#
+Name,Model,Rate (EUR),Block (sec),Threshold 1 (clip),Discount 1 (%),Type 1,Threshold 2 (clip),Discount 2 (%),Type 2
+#
+# ===================================================================
+# SENZA SCONTO
+# ===================================================================
+#
+# Esempio 01 — tariffa fissa per articolo, nessuno sconto
+Banca GIORNALI Esempio 01,A clip,75.00,,,,,,
+#
+# Esempio 02 — tariffa media, nessuno sconto
+Banca GIORNALI Esempio 02,A clip,120.00,,,,,,
+#
+# Esempio 03 — tariffa alta, testata di rilievo
+Banca GIORNALI Esempio 03,A clip,350.00,,,,,,
+#
+# ===================================================================
+# 1 SCONTO FLAT
+# L'intero importo si riduce se si supera la soglia di articoli.
+# ===================================================================
+#
+# Esempio 04 — 1 sconto flat dal 4° articolo
+# Lettura: 10% sull'intero importo se vengono usati > 3 articoli unici
+Banca GIORNALI Esempio 04,A clip,75.00,,3,10,flat,,,
+#
+# Esempio 05 — 1 sconto flat, percentuale più alta
+# Lettura: 20% sull'intero importo oltre 3 articoli unici
+Banca GIORNALI Esempio 05,A clip,120.00,,3,20,flat,,,
+#
+# ===================================================================
+# 2 SCONTI FLAT — soglie crescenti
+# Si applica solo lo scaglione con la soglia più alta raggiunta.
+# ===================================================================
+#
+# Esempio 06 — 2 sconti flat su due fasce volume
+# Lettura: 10% oltre 3 articoli; 20% oltre 8 articoli
+Banca GIORNALI Esempio 06,A clip,75.00,,3,10,flat,8,20,flat
+#
+# Esempio 07 — 2 sconti flat, fasce più ampie
+# Lettura: 10% oltre 3 articoli; 25% oltre 10 articoli
+Banca GIORNALI Esempio 07,A clip,75.00,,3,10,flat,10,25,flat
+#
+# Esempio 08 — 2 sconti flat, percentuali più aggressive
+# Lettura: 15% oltre 3 articoli; 30% oltre 20 articoli
+Banca GIORNALI Esempio 08,A clip,120.00,,3,15,flat,20,30,flat
+#
+# ===================================================================
+# SCONTO PROGRESSIVO
+# Su modello "A clip" il progressivo si comporta come flat.
+# ===================================================================
+#
+# Esempio 09 — 1 sconto progressivo dal 4° articolo
+Banca GIORNALI Esempio 09,A clip,75.00,,3,15,progressive,,,
+#
+# ===================================================================
+# FLAT + PROGRESSIVO
+# ===================================================================
+#
+# Esempio 10 — flat dal 4° articolo, progressivo dal 9°
+Banca GIORNALI Esempio 10,A clip,75.00,,3,10,flat,8,20,progressive
+#
+# Esempio 11 — flat + progressivo, testata premium
+Banca GIORNALI Esempio 11,A clip,350.00,,3,10,flat,10,25,progressive

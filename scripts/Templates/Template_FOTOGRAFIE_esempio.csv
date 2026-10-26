@@ -1,0 +1,11 @@
+﻿Name,Model,Rate (EUR),Block (sec),Threshold 1 (clip),Discount 1 (%),Type 1,Threshold 2 (clip),Discount 2 (%),Type 2
+Banca FOTOGRAFIE Esempio 01,A clip,150.00,,,,,,
+Banca FOTOGRAFIE Esempio 02,A clip,850.00,,,,,,
+Banca FOTOGRAFIE Esempio 03,A clip,150.00,,3,10,flat,,,
+Banca FOTOGRAFIE Esempio 04,A clip,150.00,,3,20,flat,,,
+Banca FOTOGRAFIE Esempio 05,A clip,150.00,,3,10,flat,8,20,flat
+Banca FOTOGRAFIE Esempio 06,A clip,150.00,,3,15,flat,10,30,flat
+Banca FOTOGRAFIE Esempio 07,A clip,200.00,,3,10,flat,20,25,flat
+Banca FOTOGRAFIE Esempio 08,A clip,150.00,,3,15,progressive,,,
+Banca FOTOGRAFIE Esempio 09,A clip,150.00,,3,10,flat,8,20,progressive
+Banca FOTOGRAFIE Esempio 10,A clip,500.00,,3,10,flat,10,25,progressive

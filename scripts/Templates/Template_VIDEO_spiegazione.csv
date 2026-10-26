@@ -1,0 +1,163 @@
+﻿# ===================================================================
+# RepertoireDB — Template banche dati VIDEO
+# © Tommaso Feraboli Film Editor — CC BY-NC-SA 4.0
+# ===================================================================
+#
+# ISTRUZIONI
+# ----------
+# 1. Rimuovi le righe che iniziano con # (commenti) prima di importare,
+#    oppure lasciale: vengono ignorate automaticamente.
+# 2. Prima riga con intestazioni: obbligatoria, non modificare i nomi.
+# 3. Separatore: virgola. Decimali: punto (es. 250.00).
+# 4. Dopo l'importazione in RepertoireDB_Config, verifica che il campo
+#    "Tipo media" sia impostato su VIDEO per ogni banca.
+#
+# COLONNE
+# -------
+# Name              — nome univoco della banca (case-sensitive)
+# Model             — A clip | Al secondo | Al minuto | A blocchi (custom)
+# Rate (EUR)        — tariffa in euro per unità del modello
+# Block (sec)       — durata blocco in secondi (solo "A blocchi (custom)")
+# Threshold N       — DIPENDE DAL MODELLO:
+#                     A clip        → numero di clip (es. 3 = sconto dalla 4a clip)
+#                     Al secondo    → secondi totali sorgente (es. 180 = 3 minuti)
+#                     Al minuto     → secondi totali sorgente (es. 180 = 3 minuti)
+#                     A blocchi     → secondi totali sorgente
+# Discount N (%)    — percentuale di sconto N
+# Type N            — flat | progressive
+#                     flat        = percentuale sull'intero importo
+#                     progressive = percentuale solo sulla parte eccedente la soglia
+#                     (per "A clip" flat e progressive si comportano allo stesso modo)
+#
+# Gli scaglioni di sconto sono in ordine crescente di soglia.
+# Viene applicato lo scaglione con la soglia più alta superata
+# (non si sommano scaglioni multipli).
+#
+Name,Model,Rate (EUR),Block (sec),Threshold 1,Discount 1 (%),Type 1,Threshold 2,Discount 2 (%),Type 2
+#
+# ===================================================================
+# MODELLO: A CLIP
+# Tariffa fissa per ogni file sorgente unico in timeline.
+# Il numero di usi della stessa clip non cambia il costo.
+# SOGLIA SCONTO = numero di clip (non secondi)
+# ===================================================================
+#
+# Esempio 01 — A clip, nessuno sconto
+Banca VIDEO Esempio 01,A clip,5300.00,,,,,,
+#
+# Esempio 02 — A clip, 1 sconto flat
+# Lettura: 15% sull'intero importo se vengono usate più di 3 clip uniche
+Banca VIDEO Esempio 02,A clip,5300.00,,3,15,flat,,,
+#
+# Esempio 03 — A clip, 2 sconti flat
+# Lettura: 15% oltre 3 clip; 25% oltre 8 clip
+Banca VIDEO Esempio 03,A clip,5300.00,,3,15,flat,8,25,flat
+#
+# Esempio 04 — A clip, 1 sconto progressivo
+# Nota: su "A clip" il progressivo si comporta come flat (il costo è discreto per clip)
+# Lettura: 20% sull'intero importo oltre 3 clip
+Banca VIDEO Esempio 04,A clip,5300.00,,3,20,progressive,,,
+#
+# Esempio 05 — A clip, 2 sconti (flat + progressivo)
+# Lettura: 10% flat oltre 3 clip; 20% oltre 8 clip
+Banca VIDEO Esempio 05,A clip,5300.00,,3,10,flat,8,20,progressive
+#
+# ===================================================================
+# MODELLO: AL SECONDO
+# Tariffa × secondi sorgente unici, ceil al secondo superiore.
+# Es.: 61.3s → 62s fatturati.
+# ===================================================================
+#
+# Esempio 06 — Al secondo, nessuno sconto
+Banca VIDEO Esempio 06,Al secondo,8.50,,,,,,
+#
+# Esempio 07 — Al secondo, 1 sconto flat
+# Lettura: 15% sull'intero importo se tot > 3 min
+Banca VIDEO Esempio 07,Al secondo,8.50,,180,15,flat,,,
+#
+# Esempio 08 — Al secondo, 1 sconto progressivo
+# Lettura: 20% solo sui secondi oltre 3 min; i primi 180s a tariffa piena
+Banca VIDEO Esempio 08,Al secondo,8.50,,180,20,progressive,,,
+#
+# Esempio 09 — Al secondo, 2 sconti flat
+# Lettura: 10% oltre 2 min; 25% oltre 10 min
+Banca VIDEO Esempio 09,Al secondo,8.50,,120,10,flat,600,25,flat
+#
+# Esempio 10 — Al secondo, 2 sconti progressivi
+# Lettura: 15% progressivo oltre 2 min; 30% progressivo oltre 10 min
+Banca VIDEO Esempio 10,Al secondo,8.50,,120,15,progressive,600,30,progressive
+#
+# Esempio 11 — Al secondo, flat + progressivo
+# Lettura: 10% flat oltre 2 min; 20% progressivo oltre 6 min
+Banca VIDEO Esempio 11,Al secondo,8.50,,120,10,flat,360,20,progressive
+#
+# ===================================================================
+# MODELLO: AL MINUTO
+# Tariffa × minuti sorgente unici, ceil al minuto superiore.
+# Es.: 2 min 10s → 3 min fatturati.
+# ===================================================================
+#
+# Esempio 12 — Al minuto, nessuno sconto
+Banca VIDEO Esempio 12,Al minuto,250.00,,,,,,
+#
+# Esempio 13 — Al minuto, 1 sconto flat
+# Lettura: 15% sull'intero importo se tot > 3 min
+Banca VIDEO Esempio 13,Al minuto,250.00,,180,15,flat,,,
+#
+# Esempio 14 — Al minuto, 1 sconto progressivo
+# Lettura: 20% solo sui minuti oltre 3 min; i primi 3 min a tariffa piena
+Banca VIDEO Esempio 14,Al minuto,250.00,,180,20,progressive,,,
+#
+# Esempio 15 — Al minuto, 2 sconti flat
+# Lettura: 10% oltre 3 min; 25% oltre 10 min
+Banca VIDEO Esempio 15,Al minuto,250.00,,180,10,flat,600,25,flat
+#
+# Esempio 16 — Al minuto, 2 sconti progressivi
+# Lettura: 15% progressivo oltre 3 min; 30% progressivo oltre 10 min
+Banca VIDEO Esempio 16,Al minuto,250.00,,180,15,progressive,600,30,progressive
+#
+# Esempio 17 — Al minuto, flat + progressivo
+# Lettura: 10% flat oltre 3 min; 20% progressivo oltre 6 min
+Banca VIDEO Esempio 17,Al minuto,250.00,,180,10,flat,360,20,progressive
+#
+# ===================================================================
+# MODELLO: A BLOCCHI (CUSTOM)
+# Tariffa × numero di blocchi, ceil al blocco superiore.
+# Es. blocchi da 30s: 61s → 3 blocchi fatturati.
+# La colonna Block (sec) definisce la durata di ogni blocco.
+# ===================================================================
+#
+# Esempio 18 — Blocchi da 30s, nessuno sconto
+Banca VIDEO Esempio 18,A blocchi (custom),50.00,30,,,,,
+#
+# Esempio 19 — Blocchi da 30s, 1 sconto flat
+# Lettura: 15% sull'intero importo se tot > 3 min
+Banca VIDEO Esempio 19,A blocchi (custom),50.00,30,180,15,flat,,,
+#
+# Esempio 20 — Blocchi da 30s, 1 sconto progressivo
+# Lettura: 20% solo sui blocchi oltre 3 min; i blocchi entro 3 min a tariffa piena
+Banca VIDEO Esempio 20,A blocchi (custom),50.00,30,180,20,progressive,,,
+#
+# Esempio 21 — Blocchi da 30s, 2 sconti flat
+# Lettura: 10% oltre 3 min; 25% oltre 10 min
+Banca VIDEO Esempio 21,A blocchi (custom),50.00,30,180,10,flat,600,25,flat
+#
+# Esempio 22 — Blocchi da 30s, 2 sconti progressivi
+# Lettura: 15% progressivo oltre 3 min; 30% progressivo oltre 10 min
+Banca VIDEO Esempio 22,A blocchi (custom),50.00,30,180,15,progressive,600,30,progressive
+#
+# Esempio 23 — Blocchi da 30s, flat + progressivo
+# Lettura: 10% flat oltre 3 min; 20% progressivo oltre 6 min
+Banca VIDEO Esempio 23,A blocchi (custom),50.00,30,180,10,flat,360,20,progressive
+#
+# Esempio 24 — Blocchi da 60s, nessuno sconto
+Banca VIDEO Esempio 24,A blocchi (custom),90.00,60,,,,,
+#
+# Esempio 25 — Blocchi da 60s, 1 sconto flat
+Banca VIDEO Esempio 25,A blocchi (custom),90.00,60,180,15,flat,,,
+#
+# Esempio 26 — Blocchi da 60s, 1 sconto progressivo
+Banca VIDEO Esempio 26,A blocchi (custom),90.00,60,180,20,progressive,,,
+#
+# Esempio 27 — Blocchi da 60s, 2 sconti (flat + progressivo)
+Banca VIDEO Esempio 27,A blocchi (custom),90.00,60,180,10,flat,600,25,progressive

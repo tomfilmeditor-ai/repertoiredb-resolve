@@ -1,0 +1,54 @@
+# ============================================================
+# RepertoireDB — file da non pubblicare
+# ============================================================
+
+# --- DATI DI LAVORO: mai nel repository ---
+# Contiene le tariffe reali negoziate con gli archivi.
+# Nel repository va solo repertoire_db.example.json, con dati inventati.
+repertoire_db.json
+repertoire_db*.json
+!repertoire_db.example.json
+
+# Snapshot della configurazione salvati dall'utente
+memories/
+scripts/memories/
+
+# --- PACCHETTI GENERATI: vanno nelle Release, non nel repository ---
+# Sono file da ~100 KB con l'archivio codificato dentro: cambiano a ogni
+# versione e gonfierebbero la cronologia per sempre.
+*.tar.gz
+*.zip
+*_Install_macOS.command
+*_Install_Windows.cmd
+
+# --- FILE DI SISTEMA ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# --- PYTHON ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# --- LOG ---
+*.log
+repertoire_db.log
+
+# --- EDITOR ---
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- VECCHIE VERSIONI ---
+# L'archivio delle versioni resta in locale: su GitHub la cronologia la fa git.
+old/
+OLDV/
+ARCHIVE/

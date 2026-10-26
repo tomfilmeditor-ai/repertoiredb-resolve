@@ -1,0 +1,103 @@
+﻿# ===================================================================
+# RepertoireDB — Template banche dati FOTOGRAFIE
+# © Tommaso Feraboli Film Editor — CC BY-NC-SA 4.0
+# ===================================================================
+#
+# ISTRUZIONI
+# ----------
+# 1. Rimuovi le righe che iniziano con # (commenti) prima di importare,
+#    oppure lasciale: vengono ignorate automaticamente.
+# 2. Prima riga con intestazioni: obbligatoria, non modificare i nomi.
+# 3. Separatore: virgola. Decimali: punto (es. 150.00).
+# 4. IMPORTANTE: dopo l'importazione, apri RepertoireDB_Config,
+#    seleziona ogni banca e imposta "Tipo media" = Fotografie.
+#    Solo le banche di tipo Fotografie accettano file immagine nel tagging.
+#
+# MODELLO UNICO: A CLIP
+# Il modello per le fotografie è sempre "A clip": tariffa fissa per
+# ogni file immagine unico (jpg, tiff, png, ecc.) presente in timeline.
+# Lo stesso file usato più volte conta come 1 sola immagine.
+#
+# COLONNE
+# -------
+# Name                — nome univoco della banca (case-sensitive)
+# Model               — sempre "A clip" per le fotografie
+# Rate (EUR)          — tariffa per singola immagine unica
+# Block (sec)         — non usato per le fotografie (lasciare vuoto)
+# Threshold N (clip)  — numero di immagini uniche oltre cui si attiva lo sconto N
+#                       Es.: 3 = lo sconto si applica se in timeline ci sono > 3 immagini uniche
+# Discount N (%)      — percentuale di sconto
+# Type N              — flat | progressive
+#                       Su "A clip" flat e progressive producono lo stesso risultato:
+#                       la percentuale si applica sull'intero importo della banca.
+#
+# LOGICA SCONTO
+# -------------
+# La soglia è un numero di clip (immagini uniche). Se in timeline compaiono
+# più di N immagini uniche di questa banca, lo sconto viene applicato.
+# Viene applicato solo lo scaglione con la soglia più alta raggiunta
+# (gli sconti non si sommano).
+#
+Name,Model,Rate (EUR),Block (sec),Threshold 1 (clip),Discount 1 (%),Type 1,Threshold 2 (clip),Discount 2 (%),Type 2
+#
+# ===================================================================
+# SENZA SCONTO
+# ===================================================================
+#
+# Esempio 01 — tariffa fissa per immagine, nessuno sconto
+# Uso tipico: agenzie con prezzo fisso per ogni foto, indipendente dal volume
+Banca FOTOGRAFIE Esempio 01,A clip,150.00,,,,,,
+#
+# Esempio 02 — tariffa alta, nessuno sconto
+# Uso tipico: fotografie esclusive o ad alto valore editoriale
+Banca FOTOGRAFIE Esempio 02,A clip,850.00,,,,,,
+#
+# ===================================================================
+# 1 SCONTO FLAT
+# L'intero importo si riduce se si supera la soglia di clip.
+# ===================================================================
+#
+# Esempio 03 — 1 sconto flat dalla 4a immagine
+# Lettura: 10% sull'intero importo se vengono usate > 3 immagini uniche
+Banca FOTOGRAFIE Esempio 03,A clip,150.00,,3,10,flat,,,
+#
+# Esempio 04 — 1 sconto flat, percentuale più alta
+# Lettura: 20% sull'intero importo oltre 3 immagini uniche
+Banca FOTOGRAFIE Esempio 04,A clip,150.00,,3,20,flat,,,
+#
+# ===================================================================
+# 2 SCONTI FLAT — soglie crescenti
+# Si applica solo lo scaglione con la soglia più alta raggiunta.
+# ===================================================================
+#
+# Esempio 05 — 2 sconti flat su due fasce volume
+# Lettura: 10% oltre 3 immagini; 20% oltre 8 immagini
+Banca FOTOGRAFIE Esempio 05,A clip,150.00,,3,10,flat,8,20,flat
+#
+# Esempio 06 — 2 sconti flat, percentuali più alte
+# Lettura: 15% oltre 3 immagini; 30% oltre 10 immagini
+Banca FOTOGRAFIE Esempio 06,A clip,150.00,,3,15,flat,10,30,flat
+#
+# Esempio 07 — 2 sconti flat, fasce più ampie
+# Lettura: 10% oltre 3 immagini; 25% oltre 20 immagini
+Banca FOTOGRAFIE Esempio 07,A clip,200.00,,3,10,flat,20,25,flat
+#
+# ===================================================================
+# SCONTO PROGRESSIVO
+# Su modello "A clip" il progressivo si comporta come flat.
+# ===================================================================
+#
+# Esempio 08 — 1 sconto progressivo dalla 4a immagine
+# Lettura: 15% sull'intero importo oltre 3 immagini uniche
+Banca FOTOGRAFIE Esempio 08,A clip,150.00,,3,15,progressive,,,
+#
+# ===================================================================
+# FLAT + PROGRESSIVO
+# ===================================================================
+#
+# Esempio 09 — flat dalla 4a immagine, progressivo dalla 9a
+# Lettura: 10% flat oltre 3 immagini; 20% oltre 8 immagini
+Banca FOTOGRAFIE Esempio 09,A clip,150.00,,3,10,flat,8,20,progressive
+#
+# Esempio 10 — flat + progressivo, tariffe alte
+Banca FOTOGRAFIE Esempio 10,A clip,500.00,,3,10,flat,10,25,progressive

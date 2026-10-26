@@ -1,0 +1,283 @@
+# RepertoireDB — Changelog
+
+## [1.2.14] — 2026-10-26
+
+### Modificato
+- **Indirizzo delle segnalazioni bug**: dall'indirizzo personale dell'autore a **`tomfilmeditor.tools@gmail.com`**, casella dedicata agli strumenti. Cambia solo il destinatario: il pulsante 🐛, l'avviso privacy e le informazioni di sistema raccolte funzionano come prima.
+  - Aggiornati: i tre script, `BugReportDialog.lua`, `RepertoireDB_README.txt`, `bug_management_config.json`, `INSTALL.txt`
+  - Il pulsante ☕ **non è toccato**: `paypal.me/acoffeefortom` è un link che non contiene alcun indirizzo email
+- **Il pacchetto distribuito non contiene più il listino tariffe.** `Templates/RepertoireDB_Archivi.csv` (12 archivi con le tariffe reali negoziate e note commerciali) è sostituito da `RepertoireDB_Archivi_template.csv`: stessi archivi, **tariffe a zero**, con istruzioni su come compilarle e l'avvertenza che molti archivi applicano costi fissi per ordine che lo strumento non calcola.
+  - Il generatore dell'installer ora **si ferma con errore** se trova un archivio reale accompagnato da una tariffa: la protezione non dipende più dall'attenzione di chi genera il pacchetto
+
+### Da sapere per chi aggiorna
+- Il tuo `repertoire_db.json` e la cartella `memories/` non vengono toccati: le banche dati configurate restano
+- Se usavi `Templates/RepertoireDB_Archivi.csv` come riferimento, nel pacchetto ora trovi la versione con le tariffe da compilare
+
+## Documentazione — 13 ottobre 2026 (nessuna modifica al codice)
+
+- `RepertoireDB_README.txt` allineato alla 1.2.13 (era fermo alla 1.2.9, 844 → 1094 righe). Aggiunto quello che mancava: avviso che **serve Resolve Studio** (UIManager è Studio-only dalla 19.1), installazione tramite installer, le **due cartelle di destinazione** e l'errore `module 'LogManager' not found` che si ottiene sbagliandole, modello di pricing **Forfait** (c'era dalla 1.2.8 ma non era documentato), tab **Memorie**, **Utilizzo Minimo** e colonna "Secondi Scoperti", **file di log** e sua rotazione, **avviso privacy** nella segnalazione bug, export **Excel a tre fogli**, campo `utilMin` nella struttura JSON, i due moduli condivisi nella sezione per sviluppatori.
+- Aggiunto `INSTALL.txt` bilingue EN/IT al pacchetto di installazione (prima le istruzioni esistevano solo a schermo durante l'installazione).
+- Nota: la versione **1.2.7 non risulta documentata** da nessuna parte — né qui né nel README. Probabile salto di numerazione fra 1.2.6 e 1.2.8, segnalato come tale invece di inventarne il contenuto.
+- Questo file non contiene le voci dalla 1.2.1 alla 1.2.7: quella cronologia esiste solo nel README. Da sanare se il CHANGELOG viene pubblicato.
+
+## [1.2.13] — 2026-08-06
+
+### Aggiunto
+- **BugReportDialog.lua — Modulo dialog segnalazione bug con Privacy Notice**
+  - Modulo Lua riutilizzabile via `require("BugReportDialog")` in tutti gli script RepertoireDB
+  - Privacy notice visibile prima di compilare l'email (trasparenza dati)
+  - Template email pre-compilato con info sistema (OS, Resolve, Lua version)
+  - Funzioni pubbliche: `:show()` (mostra notice), `:sendEmail()` (apre Mail.app), `:createButton()`
+  - Supporto cross-platform: AppleScript per macOS, mailto: per Windows/Linux
+
+- **BugReportDialog.py — Modulo dialog segnalazione bug per Python**
+  - Modulo Python riutilizzabile via `from BugReportDialog import BugReportDialog`
+  - Privacy notice visibile in console prima di inviare
+  - Template email pre-compilato con info sistema (OS, Python, Resolve version)
+  - Metodi: `show_privacy_notice()`, `send_email_macos()`, `send_email_windows()`, `handle_bug_report()`
+  - Supporto cross-platform con fallback automatico
+
+### Modificato
+- **Config.lua (v1.2.13)**
+  - Integrato `BugReportDialog:show()` e `BugReportDialog:sendEmail()`
+  - Rimossa logica inline di reportBug() — ora usa il modulo
+  - Aggiunta privacy notice visibile prima di compilare l'email
+
+- **Calculator.lua (v1.2.13)**
+  - Integrato `BugReportDialog:show()` e `BugReportDialog:sendEmail()`
+  - Rimossa logica inline di reportBug() — ora usa il modulo
+  - Aggiunta privacy notice visibile prima di compilare l'email
+
+- **Monitor.lua (v1.2.13)**
+  - Integrato `BugReportDialog:show()` e `BugReportDialog:sendEmail()`
+  - Rimossa logica inline di reportBug() — ora usa il modulo
+  - Aggiunta privacy notice visibile prima di compilare l'email
+
+- **MarkerClipManager.py (v1.2.13)**
+  - Integrato `BugReportDialog.handle_bug_report()`
+  - Rimossa logica inline di report_bug() — ora usa il modulo
+  - Aggiunta privacy notice visibile prima di compilare l'email
+
+### Note
+- Privacy notice trasparente su dati inviati (OS, versioni, timeline)
+- Nessun dato sensibile incluso: no password, API key, credenziali
+- Utente può editare email prima di inviare
+- Client di posta nativo aperto automaticamente (Mail.app/Windows/xdg-open)
+
+---
+
+## [1.2.12] — 2026-08-06
+
+### Aggiunto
+- **LogManager.lua — Sistema centralizzato di logging**
+  - Modulo Lua riutilizzabile via `require("LogManager")` in tutti gli script
+  - 5 livelli di log: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  - Rotazione automatica log per SIZE (5 MB, non per data)
+  - Percorso cross-platform unificato: `~/Library/Logs/RepertoireDB/`
+  - Funzioni pubbliche: `LogManager:init()`, `:debug()`, `:info()`, `:warn()`, `:error()`, `:critical()`
+  - Utility: `getTail(n)`, `readAll()` per debugging
+
+- **log_manager.py — Singleton Python per logging**
+  - Modulo Python riutilizzabile via `from log_manager import log`
+  - Istanza globale preconfigurata: `log.info()`, `log.error()`, ecc.
+  - Stessi 5 livelli e percorsi cross-platform di LogManager.lua
+  - Serializzazione JSON per dati strutturati
+
+### Modificato
+- **Config.lua (v1.2.12)**
+  - Migrato a `LogManager:init()` + LogManager centralizzato
+  - Rimosso `getLogPath()`, `logMessage()`, `rotateLog()` (ora in LogManager.lua)
+  - Logging aggiunto:
+    - loadDB(): `LogManager:info()` — "#banche caricate"
+    - saveDB(): `LogManager:info/error()` — successo/permessi insufficienti
+    - importFromJSON(): `LogManager:error/info()` — errore JSON / "#banche importate"
+    - reportBug(): `LogManager:warn()` — segnalazione inviata
+
+- **Calculator.lua (v1.2.12)**
+  - Migrato a `LogManager:init()` + LogManager centralizzato
+  - Logging aggiunto (7 punti critici):
+    - Timeline aperta: `LogManager:info()` — "Timeline ... aperta"
+    - Scansione clip: `LogManager:debug()` — "Clip rilevati: N"
+    - Deduplicazione: `LogManager:debug()` — "N duplicati trovati"
+    - Calcolo completato: `LogManager:info()` — "Totale: €..."
+    - Export CSV: `LogManager:info()` — "N righe scritte"
+    - Export XLSX: `LogManager:info/error()` — success/fallback Python non trovato
+
+- **Monitor.lua (v1.2.12)**
+  - Migrato a `LogManager:init()` + LogManager centralizzato
+  - Logging aggiunto (6 punti critici):
+    - Startup: `LogManager:info()` — "Monitor avviato"
+    - Banks caricati: `LogManager:info()` — "N banche Video"
+    - Aggiornamento timeline: `LogManager:debug()` — "Scan in corso"
+    - Errori calcolo: `LogManager:error()` — "Errore calcolo durata"
+    - Chiusura: `LogManager:info()` — "Monitor chiuso"
+
+- **MarkerClipManager.py (v1.2.12)**
+  - Integrato `from log_manager import log`
+  - Logging aggiunto (8 punti critici):
+    - GUI inizializzata: `log.info()` — "GUI inizializzata - PySide6 caricato"
+    - Resolve connesso: `log.info()` — "Resolve connesso"
+    - Timeline caricata: `log.info()` — "N marker trovati"
+    - Marker modificato: `log.debug()` — "Marker ID X modificato (color/track)"
+    - Errore modifica: `log.error()` — "Impossibile modificare marker"
+    - Export CSV: `log.info()` — "N marker scritti"
+    - Import CSV: `log.info()` — "N marker importati"
+    - Errori generici: `log.error()` — exception type + message
+
+### Compatibilità
+- Tutti gli script aggiornati a v1.2.12 con LogManager centralizzato
+- Configuration JSON identico (nessun breaking change)
+- Percorsi log unificati cross-platform (macOS/Windows)
+- reportBug() integrato con lettura automatica del log
+
+## [1.2.11] — 2026-08-06
+
+### Aggiunto
+- **Utilizzo Minimo** per banca dati: campo `utilMin` (secondi) configurabile in Config.lua e visibile nella colonna "Util.Min." del tree banche
+  - Se l'utilizzo effettivo in montaggio è inferiore al minimo, il costo viene calcolato sul minimo impostato
+  - Superata la soglia del minimo, il calcolo torna sull'utilizzo effettivo normale
+  - Applicato a tutti i modelli temporali (Al secondo, Al minuto, A blocchi); ignorato per "A clip" e "Forfait"
+  - Salvato nel JSON di configurazione e propagato all'export XLSX
+- **Pulsante "⏭️  Apri Calcolatore"** in Config.lua
+  - Posizionato in basso centrato tra "Annulla" e le icone emoji
+  - Chiude Config e apre Calculator via `dofile()`
+- **Informazioni deficit utilizzo minimo** nel JSON export (Calculator.lua)
+  - Nuovo campo `dbUncoveredSec`: secondi non utilizzati sotto la soglia (se utilizzo < utilMin)
+  - Nuovo campo `dbTotalSec`: secondi totali per banca (utile per calcoli sconti e reporting)
+- **Export XLSX aggiornato** (RepertoireDB_xlsx.py v1.2.11):
+  - Foglio Config: nuova colonna F "Utilizzo Min. (sec)" editabile, pre-valorizzata dal JSON
+  - Foglio Riepilogo colonna B: formula aggiornata con `MAX(durata_effettiva, utilMin)` per i modelli temporali
+  - Foglio Riepilogo: **rinominata colonna C** "Somma Clip €" → "Occorrenze" (formato numerico, no €)
+  - Foglio Riepilogo: **nuova colonna H "Secondi Scoperti"** — mostra deficit se utilizzo < minimo (es. "Min 300s - Usati 120s - Scoperti 180s")
+  - Colonne sconto spostate: soglie in H-Q, conversioni nascoste in R-V (erano G-P e Q-U)
+
+- **Sistema di logging completo** (Config.lua + Calculator.lua + MarkerClipManager.py)
+  - Percorso unificato: `~/Library/Logs/RepertoireDB/` (macOS) / `%LOCALAPPDATA%/Blackmagic Design/DaVinci Resolve/Logs/RepertoireDB/` (Windows)
+  - Livelli: INFO, WARNING, ERROR, DEBUG con timestamp YYYY-MM-DD HH:MM:SS
+  - Rotazione automatica: log cancellato se > 7 giorni
+  - Integrazione BtnBug (🐛):
+    - **macOS**: AppleScript apre Mail.app con log allegato vero
+    - **Windows**: mailto con log completo nel body
+  - Funzioni uniformi: `getLogPath()`, `logMessage(level, message)`, `rotateLog()`
+  - Implementato in:
+    - Config.lua (Lua + pcall error handling)
+    - Calculator.lua (Lua + pcall error handling)
+    - MarkerClipManager.py (Python + try-except)
+  - **Documento standard**: `LOGGING_STANDARD.md` — guida uniforme per script futuri (template Lua + Python, best practices, checklist)
+  - File di esempio: `repertoire_db_example.log` (Desktop)
+  - Guida integrazione: `LOGGING_INTEGRATION_GUIDE.md` (Desktop)
+
+### Modificato
+- Dimensioni finestre aumentate per evitare sovraffollamento UI:
+  - Config.lua: Geometry 840→920 (width), 760→820 (height); MinimumSize 900×800
+  - Calculator.lua: Geometry 1000→1100 (width), 660→720 (height); MinimumSize 1080×700
+- Funzione `reportBug()` aggiornata: legge e allega file di log alle segnalazioni
+
+## [1.2.10] — 2026-07-31
+
+### Modificato
+- **Export XLSX a 3 fogli con formule cross-sheet** (RepertoireDB_xlsx.py):
+  - Foglio **Config**: tabella banche dati editabile (FPS in B1, tariffe e modelli)
+  - Foglio **Segmenti**: formule collegate a Config per Modello (VLOOKUP), Durata (da frame helpers), Costo (VLOOKUP); colonne helper N–S nascoste per aritmetica TC; clip deduplicate con fill arancio e costo statico (0)
+  - Foglio **Riepilogo**: VLOOKUP/COUNTIF/SUMPRODUCT cross-sheet per ogni banca; colonna Sconto % editabile; SUBTOTALE per categoria; TOTALE GENERALE; legenda
+  - Bordini celle sottili su tutti i dati (visibili come nel precedente export)
+  - Modello Forfait supportato nella formula Riepilogo (costo fisso)
+- **`dupStatus` esportato in JSON** (RepertoireDB_Calculator.lua): ogni segmento ora include il campo `dupStatus` ("nuovo"/"duplicato"/"parziale") usato dallo script xlsx per il fill arancio e il costo statico
+
+## [1.2.9] — 2026-07-31
+
+### Aggiunto
+- **Tab "Memorie"** nella finestra Config: salva e richiama snapshot dell'intera configurazione
+  - Salva la configurazione attuale come file JSON nominato (cartella `memories/` nella directory script)
+  - Carica una memoria: sostituisce completamente la configurazione attuale (con alert di conferma)
+  - Elimina una memoria dalla libreria
+  - Prima del caricamento, l'attuale configurazione viene salvata automaticamente come `_previous.json`
+  - Pulsante "Ripristina precedente" per annullare l'ultimo caricamento
+
+### Uniformato (tutti gli script)
+- **Bottoni emoji grandi** (📖 Guida / ☕ Offrimi un caffè / 🐛 Riporta bug) con gradiente colorato
+  propagati a Calculator e Monitor; stile gradiente applicato anche a MarkerClipManager (Python QSS)
+- **SortingEnabled = true** su ResultTree (Calculator) — sort nativo Qt sulle colonne del calcolo
+- **BtnBug apre PayPal** simultaneamente alla mail in tutti gli script incluso MarkerClipManager
+- **Monitor**: aggiunto 📖 BtnReadme e ☕ BtnCoffee (prima assenti); corretta label versione hardcoded
+
+## [1.2.8] — 2026-07-30
+
+### Aggiunto
+- Modello di pricing **Forfait**: prezzo fisso per l'intera banca dati, indipendente
+  da numero di clip e durata. Disponibile per Video, Fotografie e Giornali.
+  - Tutti gli eventi della banca vengono elencati con costo "compreso nel forfait"
+  - Il prezzo forfait compare nel subtotale e nel totale generale
+  - Le clip con modello Forfait non generano "secondi inutilizzati" o note di arrotondamento
+
+## [1.2.0] — 2026-05-16
+
+### Aggiunto
+- Bottone donazione PayPal (☕) nella UI del Calculator
+- Header MIT License in tutti e tre gli script
+- Costante `SCRIPT_VERSION` / `VERSION` in tutti gli script
+- Documentazione funzioni principali (commenti input/output)
+- README sezione "Per sviluppatori" con struttura file e guida al codice
+- README sezione "Nota importante — Transizioni" con spiegazione del limite
+- CHANGELOG.md (questo file)
+- LICENSE.md (MIT)
+
+### Rimosso
+- Tutto il codice di rilevamento automatico transizioni (EDL / Index CSV):
+  - `parseIndexCSV()` — parsing CSV timeline
+  - `findLatestIndexFile()` — ricerca file CSV automatica
+  - `autoLoadEDLIfAvailable()` — caricamento automatico
+  - `testDetectSceneCuts()`, `exploreTimelineObject()`, `deepExploreTimeline()` — debug API
+  - Variabili di stato `lastEdlDurations`, `transitionsLoaded`
+  - Pulsanti UI "Carica Index CSV" e "Ricerca Automatica"
+  - Label UI "LblTransStatus" e "LblTransDisclaimer"
+- File obsoleti dalla cartella script:
+  - `FINAL_VERIFICATION.txt`
+  - `INTEGRATION_COMPLETE.md`
+  - `INTEGRATION_VERIFICATION.md`
+  - `TRANSITION_DETECTION_GUIDE.md`
+  - Cartelle `_backup/` e `backup_*/`
+
+### Modificato
+- Licenza da Creative Commons CC BY-NC-SA 4.0 a MIT
+- Versione aggiornata a 1.2.0 in tutti gli script
+- README riscritto con sezione transizioni, sezione sviluppatori e link donazione
+- Separatori di sezione nel codice uniformati
+
+### Nota tecnica
+Il rilevamento automatico delle transizioni (dissolve, fade) è stato rimosso
+perché l'API Lua di DaVinci Resolve non espone metodi per accedere agli
+oggetti transizione su una timeline. Questa è una limitazione deliberata
+dell'API Blackmagic che non ha workaround affidabili allo stato attuale.
+Vedi README per istruzioni su come gestire le transizioni manualmente.
+
+
+## [1.1.0] — 2026-05
+
+### Aggiunto
+- Lettura durata sorgente via API nativa DaVinci Resolve (`GetSourceStartFrame` / `GetSourceEndFrame`)
+- Supporto tipi media: Fotografie e Giornali (modello "A clip")
+- Monitor floating (`RepertoireDB_Monitor.lua`) — riepilogo banche dati in tempo reale
+- Deduplicazione frame sorgente ripetuti in timeline
+- Visualizzazione ordine di montaggio nel dettaglio
+- Esportazione CSV con BOM UTF-8 (compatibilità Excel/Numbers)
+- Rilevamento retime: Slow Motion, Time Warp, Freeze Frame, Reverse
+- Supporto sconti progressivi
+
+### Modificato
+- Calcolo durata sorgente: da timecode EDL a API nativa Resolve
+- Arrotondamento al livello di banca aggregata (non per singolo clip)
+
+### Rimosso
+- Dipendenza da file EDL per il calcolo della durata sorgente
+
+
+## [1.0.0] — 2026-03
+
+### Prima versione pubblica
+- Configurazione banche dati via CSV/JSON (`RepertoireDB_Config.lua`)
+- Calcolo costi per banche Video con modelli Al minuto / Al secondo / A blocchi / A clip
+- Tagging clip via campo Keywords del Media Pool
+- Esportazione preventivo CSV
+- Supporto sconti flat e progressivi
+- Compatibilità DaVinci Resolve 19/20, macOS e Windows
