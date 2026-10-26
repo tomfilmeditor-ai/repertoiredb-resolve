@@ -10,9 +10,14 @@ Reads your timeline and works out what the archive material in it will cost.
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-<!-- SCREENSHOT: replace this comment with an image of the Calculator window.
-     Suggested: docs/images/calculator.png — it is the single thing that makes
-     people download a tool like this. -->
+<!-- SCREENSHOTS — two images, taken on a TEST project:
+     docs/images/calculator.png  the cost report
+     docs/images/monitor.png     the floating window with durations
+
+     Do not use a real production: the Calculator window shows per-clip costs,
+     the project total and source file names. From a cost and a duration anyone
+     can work out an archive's rate — which is exactly what this repository is
+     careful not to publish. -->
 
 ---
 
@@ -41,8 +46,25 @@ Three scripts that work together:
 | Script | What it is for |
 |---|---|
 | **Config** | Your archive database: pricing models, rates, discounts, minimum usage |
-| **Calculator** | Reads a timeline and produces the cost report |
-| **Monitor** | A floating window that keeps a running total while you edit |
+| **Calculator** | Reads a timeline and produces the full cost report |
+| **Monitor** | A small floating window: how much you have used from each archive, at a glance, while you edit |
+
+### The Monitor, in practice
+
+Most of the time you don't need a cost report — you need to know whether you
+are still inside the minutes you have licensed. The Monitor is a small window
+you leave open next to the timeline: one line per archive, with the **total
+duration used**, and how many video and audio segments it comes from.
+
+No rounding, no discounts, no invoice: just the durations, updated when you
+press Refresh. It answers the question you actually ask yourself twenty times
+a day — *how much of this archive am I using?* — without running the full
+calculation.
+
+Click an archive name and every clip from it gets flagged in the timeline and
+selected, so you can see at once where that material is in the cut.
+
+When you need the real figures, that is what the Calculator is for.
 
 **Pricing models**: per clip · per second · per minute · custom blocks · flat fee
 (video supports all of them; photo and newspaper archives use per clip or flat fee)

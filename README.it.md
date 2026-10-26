@@ -10,9 +10,14 @@ Legge la timeline e dice quanto costa il repertorio che c'è dentro.
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![Licenza](https://img.shields.io/badge/licenza-MIT-green)
 
-<!-- SCREENSHOT: sostituire questo commento con un'immagine della finestra
-     Calculator. Suggerito: docs/images/calculator.png — è la cosa che più
-     di tutte fa scaricare uno strumento come questo. -->
+<!-- SCREENSHOT — due immagini, fatte su un progetto DI PROVA:
+     docs/images/calculator.png  il preventivo
+     docs/images/monitor.png     la finestrella con le durate
+
+     Non usare un progetto vero: la finestra del Calculator mostra i costi per
+     clip, il totale della produzione e i nomi dei file sorgente. Da un costo e
+     una durata chiunque ricava la tariffa di un archivio — cioè esattamente
+     quello che questo repository evita di pubblicare. -->
 
 ---
 
@@ -40,8 +45,25 @@ Tre script che lavorano insieme:
 | Script | A cosa serve |
 |---|---|
 | **Config** | Il tuo archivio di banche dati: modelli di prezzo, tariffe, sconti, utilizzo minimo |
-| **Calculator** | Legge una timeline e produce il preventivo |
-| **Monitor** | Una finestra flottante che tiene il totale aggiornato mentre monti |
+| **Calculator** | Legge una timeline e produce il preventivo completo |
+| **Monitor** | Una finestrella flottante: quanto hai usato di ogni banca, a colpo d'occhio, mentre monti |
+
+### Il Monitor, in pratica
+
+Quasi sempre non ti serve un preventivo: ti serve sapere se sei ancora dentro
+i minuti che hai licenziato. Il Monitor è una finestrella che tieni aperta di
+fianco alla timeline: una riga per banca dati, con la **durata totale usata** e
+da quanti segmenti video e audio arriva.
+
+Niente arrotondamenti, niente sconti, niente fattura: solo le durate,
+aggiornate quando premi Aggiorna. Risponde alla domanda che ti fai venti volte
+al giorno — *quanto sto usando di questo archivio?* — senza far partire il
+calcolo completo.
+
+Cliccando il nome di una banca, tutti i suoi clip vengono flaggati in timeline
+e selezionati: vedi subito dove sta quel materiale nel montaggio.
+
+Quando servono i numeri veri, c'è il Calculator.
 
 **Modelli di prezzo**: a clip · al secondo · al minuto · a blocchi personalizzati ·
 forfait (il video li usa tutti; fotografie e giornali usano a clip o forfait)
