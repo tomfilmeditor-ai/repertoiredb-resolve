@@ -10,14 +10,17 @@ Reads your timeline and works out what the archive material in it will cost.
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-<!-- SCREENSHOTS — two images, taken on a TEST project:
-     docs/images/calculator.png  the cost report
-     docs/images/monitor.png     the floating window with durations
+<p align="center">
+  <img src="docs/images/monitor.png" alt="The Monitor window: one line per archive, with the duration used and how many segments it comes from" width="560">
+  <br>
+  <em>The Monitor: how much you have used from each archive, while you edit</em>
+</p>
 
-     Do not use a real production: the Calculator window shows per-clip costs,
-     the project total and source file names. From a cost and a duration anyone
-     can work out an archive's rate — which is exactly what this repository is
-     careful not to publish. -->
+<!-- Still missing: docs/images/calculator.png (the cost report).
+     Take it on a TEST project, never a real production: that window shows
+     per-clip costs, the project total and source file names, and from a cost
+     next to a duration anyone can work out an archive's rate — which is
+     exactly what this repository is careful not to publish. -->
 
 ---
 

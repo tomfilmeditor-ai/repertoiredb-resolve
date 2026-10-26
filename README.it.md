@@ -10,14 +10,17 @@ Legge la timeline e dice quanto costa il repertorio che c'è dentro.
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![Licenza](https://img.shields.io/badge/licenza-MIT-green)
 
-<!-- SCREENSHOT — due immagini, fatte su un progetto DI PROVA:
-     docs/images/calculator.png  il preventivo
-     docs/images/monitor.png     la finestrella con le durate
+<p align="center">
+  <img src="docs/images/monitor.png" alt="La finestra Monitor: una riga per banca dati, con la durata usata e da quanti segmenti arriva" width="560">
+  <br>
+  <em>Il Monitor: quanto hai usato di ogni banca dati, mentre monti</em>
+</p>
 
-     Non usare un progetto vero: la finestra del Calculator mostra i costi per
-     clip, il totale della produzione e i nomi dei file sorgente. Da un costo e
-     una durata chiunque ricava la tariffa di un archivio — cioè esattamente
-     quello che questo repository evita di pubblicare. -->
+<!-- Manca ancora: docs/images/calculator.png (il preventivo).
+     Farlo su un progetto DI PROVA, mai su una produzione vera: quella finestra
+     mostra i costi per clip, il totale della produzione e i nomi dei file, e da
+     un costo accanto a una durata chiunque ricava la tariffa di un archivio —
+     cioè esattamente quello che questo repository evita di pubblicare. -->
 
 ---
 
