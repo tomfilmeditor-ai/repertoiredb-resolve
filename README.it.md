@@ -11,15 +11,21 @@ Legge la timeline e dice quanto costa il repertorio che c'è dentro.
 ![Licenza](https://img.shields.io/badge/licenza-MIT-green)
 
 <p align="center">
-  <img src="docs/images/monitor.png" alt="La finestra Monitor: una riga per banca dati, con la durata usata e da quanti segmenti arriva" width="560">
+  <img src="docs/images/calculator.webp" alt="Il Calculator: ogni clip con la sua banca dati, il modello di prezzo, i timecode e il costo" width="820">
   <br>
-  <em>Il Monitor: quanto hai usato di ogni banca dati, mentre monti</em>
+  <em>Il Calculator — il preventivo (importi sfocati: è una produzione vera)</em>
 </p>
 
-<!-- Manca ancora: docs/images/calculator.png (il preventivo).
-     Farlo su un progetto DI PROVA, mai su una produzione vera: quella finestra
-     mostra i costi per clip, il totale della produzione e i nomi dei file, e da
-     un costo accanto a una durata chiunque ricava la tariffa di un archivio —
+<p align="center">
+  <img src="docs/images/monitor.png" alt="La finestra Monitor: una riga per banca dati, con la durata usata e da quanti segmenti arriva" width="520">
+  <br>
+  <em>Il Monitor — quanto hai usato di ogni banca dati, mentre monti</em>
+</p>
+
+<!-- Entrambe le schermate vengono da una produzione vera, con tariffe e nomi
+     dei fornitori sfocati. Se le sostituisci, fai le nuove su un progetto DI
+     PROVA: la finestra del Calculator mostra i costi per clip accanto alle
+     durate, e da quella coppia chiunque ricava la tariffa di un archivio —
      cioè esattamente quello che questo repository evita di pubblicare. -->
 
 ---

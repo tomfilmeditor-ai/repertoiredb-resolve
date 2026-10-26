@@ -11,15 +11,21 @@ Reads your timeline and works out what the archive material in it will cost.
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 <p align="center">
-  <img src="docs/images/monitor.png" alt="The Monitor window: one line per archive, with the duration used and how many segments it comes from" width="560">
+  <img src="docs/images/calculator.webp" alt="The Calculator: every clip with its archive, pricing model, timecodes and cost" width="820">
   <br>
-  <em>The Monitor: how much you have used from each archive, while you edit</em>
+  <em>The Calculator — the cost report (figures blurred: this is a real production)</em>
 </p>
 
-<!-- Still missing: docs/images/calculator.png (the cost report).
-     Take it on a TEST project, never a real production: that window shows
-     per-clip costs, the project total and source file names, and from a cost
-     next to a duration anyone can work out an archive's rate — which is
+<p align="center">
+  <img src="docs/images/monitor.png" alt="The Monitor window: one line per archive, with the duration used and how many segments it comes from" width="520">
+  <br>
+  <em>The Monitor — how much you have used from each archive, while you edit</em>
+</p>
+
+<!-- Both screenshots come from a real production, with rates and supplier
+     names blurred out. If you replace them, take the new ones on a TEST
+     project: the Calculator window shows per-clip costs next to durations,
+     and from that pair anyone can work out an archive's rate — which is
      exactly what this repository is careful not to publish. -->
 
 ---
