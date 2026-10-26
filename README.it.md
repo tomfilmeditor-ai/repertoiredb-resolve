@@ -89,6 +89,16 @@ forfait (il video li usa tutti; fotografie e giornali usano a clip o forfait)
 - **Audio eccedente** — l'audio usato oltre la copertura video è conteggiato al 50%
 - **Esportazione** — report completo in CSV o Excel (`.xlsx`)
 
+**L'Excel non è una fotografia dei conti: è un foglio di calcolo che continua a lavorare.**
+L'esportazione produce tre fogli collegati fra loro da formule — `Config` con le
+banche dati, `Segmenti` con le clip, `Riepilogo` con i totali. Cambi una tariffa
+o una percentuale di sconto nel foglio `Config`, e il costo di ogni singola clip
+e tutti i totali si ricalcolano da soli. Senza riaprire Resolve, senza rilanciare
+lo script.
+
+Serve quando il montaggio è chiuso ma la trattativa no: provi due ipotesi di
+tariffa davanti al produttore e vedi subito dove finisce il preventivo.
+
 > **I numeri sono indicativi.** Il report è un calcolo di lavoro, non la
 > contabilità ufficiale della produzione. Le condizioni contrattuali variano e
 > hanno sempre la precedenza.

@@ -90,6 +90,16 @@ When you need the real figures, that is what the Calculator is for.
 - **Audio beyond video coverage** — audio-only usage billed at 50%
 - **Export** — a full report to CSV or Excel (`.xlsx`)
 
+**The Excel file is not a snapshot of the numbers: it is a spreadsheet that
+keeps working.** The export produces three sheets linked by live formulas —
+`Config` with the archives, `Segmenti` with the clips, `Riepilogo` with the
+totals. Change a rate or a discount percentage in the `Config` sheet, and every
+clip cost and every total recalculates on its own. No need to reopen Resolve or
+run the script again.
+
+Useful when the cut is locked but the negotiation is not: try two different
+rates in front of the producer and see straight away where the estimate lands.
+
 > **The figures are indicative.** The report is a working estimate, not the
 > production's official costing. Contractual terms vary and always take
 > precedence.
