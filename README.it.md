@@ -134,6 +134,9 @@ sbagliato gli script non partono.
 - **DaVinci Resolve Studio 19 o 20.** La versione gratuita non funziona: dalla
   19.1 l'interfaccia di scripting su cui sono costruiti questi strumenti
   (UIManager) è solo per Studio.
+- **L'interfaccia è in italiano** e gli importi sono in euro. Lo strumento è
+  nato per i documentari dell'autore e non è mai stato tradotto. Vedi la
+  [discussione sul supporto multilingua](../../issues).
 - macOS o Windows
 - Solo per l'esportazione in Excel: Python 3 con `openpyxl` (c'è uno script di
   supporto, `RepertoireDB_Installer.lua`, che lo prepara)

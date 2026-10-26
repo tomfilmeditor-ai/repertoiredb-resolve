@@ -135,6 +135,11 @@ the modules are in the wrong place.
 - **DaVinci Resolve Studio 19 or 20.** The free version will not work: since
   Resolve 19.1 the scripting interface these tools are built on (UIManager) is
   Studio-only.
+- **The interface is in Italian.** This README is not: the tool was written for
+  the author's own documentaries and never translated. The terms you need are
+  few and the layout is self-explanatory, but you should know before you
+  download. Costs are shown in euros. See
+  [issue on multi-language support](../../issues).
 - macOS or Windows
 - For Excel export only: Python 3 with `openpyxl` (there is a helper script,
   `RepertoireDB_Installer.lua`, that sets this up)
