@@ -187,4 +187,8 @@ ma non aspettarti le convenzioni di un progetto software.
 **Tommaso Feraboli** — Film Editor
 Distribuito con licenza [MIT](LICENSE.md) · Copyright (c) 2024-2026
 
+In parole semplici: usalo, modificalo, mettilo nei tuoi lavori — basta che nelle
+copie e nelle versioni derivate restino il nome dell'autore e l'avviso di
+licenza.
+
 Se ti fa risparmiare tempo: [offrimi un caffè](https://paypal.me/acoffeefortom) ☕

@@ -190,4 +190,7 @@ not expect the conventions of a software project.
 **Tommaso Feraboli** — Film Editor
 Licensed under [MIT](LICENSE.md) · Copyright (c) 2024-2026
 
+In plain words: use it, change it, ship it in your own work — just keep the
+author's name and the licence notice in copies and derived versions.
+
 If it saves you time: [buy me a coffee](https://paypal.me/acoffeefortom) ☕
