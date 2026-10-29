@@ -102,7 +102,7 @@ if [ "$INCLUDE_DB" = "yes" ]; then
 fi
 
 # Moduli condivisi (vanno in Fusion/Modules/Lua/ — cartella DIVERSA)
-for f in LogManager.lua BugReportDialog.lua; do
+for f in LogManager.lua BugReportDialog.lua Settings.lua; do
     cp "$SRC_MODULES/$f" "$STAGE/payload/Modules_Lua/"
 done
 
@@ -248,7 +248,33 @@ pause
 WINFOOT
 } > "$WIN_OUT"
 
+# ── Lo .command va distribuito DENTRO UNO ZIP ───────────────────────────
+# Un download HTTP non trasporta i permessi Unix: il file parte eseguibile
+# e arriva -rw-r--r--, quindi il doppio clic risponde "you do not have
+# appropriate access privileges" a CHIUNQUE lo scarichi. Dentro uno zip il
+# permesso viaggia con l'archivio e sopravvive allo scompattamento.
+# Difetto reale: la Release v1.2.14 è rimasta inutilizzabile per giorni.
+# Windows non è colpito: i .cmd si eseguono per estensione, senza bit.
+MAC_ZIP="$OUT_DIR/RepertoireDB_${VERSION}_Install_macOS.command.zip"
+rm -f "$MAC_ZIP"
+( cd "$OUT_DIR" && zip -q "$(basename "$MAC_ZIP")" "$(basename "$MAC_OUT")" )
+
+# La build si ferma se il bit non sopravvive: meglio nessun pacchetto che
+# un pacchetto che non si avvia.
+VERIFICA=$(mktemp -d)
+( cd "$VERIFICA" && unzip -q "$MAC_ZIP" )
+if [ -x "$VERIFICA/$(basename "$MAC_OUT")" ]; then
+    echo "Zip macOS: il bit di esecuzione sopravvive allo scompattamento — OK"
+else
+    echo "ERRORE: nello zip il file non risulta eseguibile. Non distribuirlo."
+    rm -rf "$VERIFICA"; exit 1
+fi
+rm -rf "$VERIFICA"
+
 echo ""
 echo "Generati:"
-ls -lh "$MAC_OUT" "$WIN_OUT" "$OUT_DIR/RepertoireDB_${VERSION}.tar.gz" | awk '{print "  " $9 "  (" $5 ")"}'
+ls -lh "$MAC_ZIP" "$WIN_OUT" "$OUT_DIR/RepertoireDB_${VERSION}.tar.gz" | awk '{print "  " $9 "  (" $5 ")"}'
+echo ""
+echo "Da allegare alla Release: SOLO lo zip macOS e il .cmd Windows."
+echo "Lo .command nudo resta qui per i test locali, non va distribuito."
 echo ""

@@ -35,20 +35,32 @@ Close DaVinci Resolve before installing. Reopen it when you are done.
 macOS
 -------------------------------------------------------------------------------
 
-File to use:  RepertoireDB_1.2.13_Install_macOS.command
+File to use:  RepertoireDB_Install_macOS.command.zip
 
-  1. RIGHT-CLICK the file, then choose "Open".
-     Do NOT double-click it.
+macOS puts TWO separate obstacles in the way. They are different problems and
+each needs its own step, which is why there are two.
+
+  1. DOUBLE-CLICK the zip to unpack it.
+     You get RepertoireDB_Install_macOS.command next to it.
+
+     Why the zip: downloading a file over the web strips its Unix
+     permissions. The installer leaves ready to run and arrives unable to
+     run, and double-clicking it answers "you do not have appropriate
+     access privileges". Inside a zip the permission travels with the
+     archive and survives.
+
+  2. RIGHT-CLICK the unpacked .command file, then choose "Open".
+     Do NOT double-click this one.
 
      Why: the installer is not signed with an Apple developer certificate,
-     so a normal double-click is blocked with a message about an
-     "unidentified developer". Right-click > Open gives you a dialog with
-     an "Open" button, which a double-click does not.
+     so a double-click is blocked with a message about an "unidentified
+     developer". Right-click > Open gives you a dialog with an "Open"
+     button, which a double-click does not.
 
-  2. In the dialog that appears, click "Open".
+  3. In the dialog that appears, click "Open".
      A Terminal window opens and shows what is happening.
 
-  3. When you read "Fatto", press ENTER to close.
+  4. When you read "Fatto", press ENTER to close.
 
 Where it installs — note that it is TWO different folders:
 
@@ -56,7 +68,7 @@ Where it installs — note that it is TWO different folders:
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Scripts/Comp/RepertoireDB/
 
-  Shared modules (LogManager, BugReportDialog):
+  Shared modules (LogManager, BugReportDialog, Settings):
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Modules/Lua/
 
@@ -68,7 +80,7 @@ Where it installs — note that it is TWO different folders:
 WINDOWS
 -------------------------------------------------------------------------------
 
-File to use:  RepertoireDB_1.2.13_Install_Windows.cmd
+File to use:  RepertoireDB_Install_Windows.cmd
 
   1. DOUBLE-CLICK the file.
 
@@ -117,7 +129,7 @@ IF SOMETHING GOES WRONG
 "module 'LogManager' not found"
     The two shared modules are not in Fusion/Modules/Lua. This is the one
     mistake the installer exists to prevent — if you installed by hand,
-    move LogManager.lua and BugReportDialog.lua there.
+    move LogManager.lua, BugReportDialog.lua and Settings.lua there.
 
 "The scripts do not open at all"
     Check you are on Resolve **Studio**. The free version cannot run them.
@@ -145,7 +157,7 @@ overwrites your own data**:
 No need to remove the old version first.
 
 To uninstall: delete the RepertoireDB folder from the Scripts location, and
-LogManager.lua + BugReportDialog.lua from Fusion/Modules/Lua. Keep a copy of
+LogManager.lua + BugReportDialog.lua + Settings.lua from Fusion/Modules/Lua. Keep a copy of
 repertoire_db.json first if you want to keep your rates.
 
 
@@ -177,20 +189,32 @@ Chiudi DaVinci Resolve prima di installare. Riaprilo quando hai finito.
 macOS
 -------------------------------------------------------------------------------
 
-File da usare:  RepertoireDB_1.2.13_Install_macOS.command
+File da usare:  RepertoireDB_Install_macOS.command.zip
 
-  1. CLIC DESTRO sul file, poi "Apri".
-     NON fare doppio clic.
+macOS mette due ostacoli diversi sulla strada. Sono due problemi distinti e
+ognuno ha il suo passaggio: per questo i passaggi sono due.
+
+  1. DOPPIO CLIC sullo zip per scompattarlo.
+     Accanto compare RepertoireDB_Install_macOS.command.
+
+     Perché lo zip: scaricando un file dal web si perdono i permessi Unix.
+     L'installer parte pronto a funzionare e arriva senza il permesso di
+     essere eseguito, e il doppio clic risponde "non disponi dei privilegi
+     di accesso necessari". Dentro uno zip il permesso viaggia con
+     l'archivio e si conserva.
+
+  2. CLIC DESTRO sul file .command scompattato, poi "Apri".
+     Su questo NON fare doppio clic.
 
      Perché: l'installer non è firmato con un certificato Apple, quindi il
      doppio clic viene bloccato con un messaggio su uno "sviluppatore non
      identificato". Il clic destro > Apri fa comparire una finestra con il
      pulsante "Apri", che con il doppio clic non appare.
 
-  2. Nella finestra che compare, clicca "Apri".
+  3. Nella finestra che compare, clicca "Apri".
      Si apre il Terminale e mostra cosa sta facendo.
 
-  3. Quando leggi "Fatto", premi INVIO per chiudere.
+  4. Quando leggi "Fatto", premi INVIO per chiudere.
 
 Dove installa — sono DUE cartelle diverse:
 
@@ -198,7 +222,7 @@ Dove installa — sono DUE cartelle diverse:
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Scripts/Comp/RepertoireDB/
 
-  Moduli condivisi (LogManager, BugReportDialog):
+  Moduli condivisi (LogManager, BugReportDialog, Settings):
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Modules/Lua/
 
@@ -210,7 +234,7 @@ Dove installa — sono DUE cartelle diverse:
 WINDOWS
 -------------------------------------------------------------------------------
 
-File da usare:  RepertoireDB_1.2.13_Install_Windows.cmd
+File da usare:  RepertoireDB_Install_Windows.cmd
 
   1. DOPPIO CLIC sul file.
 
@@ -259,7 +283,7 @@ SE QUALCOSA NON FUNZIONA
 "module 'LogManager' not found"
     I due moduli condivisi non sono in Fusion/Modules/Lua. È l'errore che
     l'installer esiste per evitare — se hai installato a mano, sposta lì
-    LogManager.lua e BugReportDialog.lua.
+    LogManager.lua, BugReportDialog.lua e Settings.lua.
 
 "Gli script non si aprono affatto"
     Verifica di avere Resolve **Studio**. La versione gratuita non può
@@ -288,7 +312,7 @@ sovrascrive mai i tuoi dati**:
 Non serve togliere prima la versione vecchia.
 
 Per disinstallare: cancella la cartella RepertoireDB dalla posizione degli
-script, e LogManager.lua + BugReportDialog.lua da Fusion/Modules/Lua. Se
+script, e LogManager.lua + BugReportDialog.lua + Settings.lua da Fusion/Modules/Lua. Se
 vuoi conservare le tariffe, mettiti da parte una copia di repertoire_db.json
 prima di cancellare.
 

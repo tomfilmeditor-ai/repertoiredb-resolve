@@ -110,9 +110,14 @@ tariffa davanti al produttore e vedi subito dove finisce il preventivo.
 Scarica l'installer per il tuo sistema dalla
 [pagina Releases](../../releases), poi:
 
-**macOS** — **clic destro** sul file `.command` e scegli **Apri**
-(non doppio clic: l'installer non è firmato con un certificato Apple, e il
-doppio clic viene bloccato).
+**macOS** — due passaggi, perché macOS mette due ostacoli diversi:
+
+1. **Doppio clic sullo zip** per scompattarlo. Scaricando un file dal web si
+   perdono i permessi Unix, quindi l'installer arriva senza il permesso di
+   essere eseguito. Dentro lo zip il permesso si conserva.
+2. **Clic destro** sul file `.command` scompattato e scegli **Apri** — non
+   doppio clic. L'installer non è firmato con un certificato Apple, e solo
+   così compare la finestra con il pulsante Apri.
 
 **Windows** — doppio clic sul file `.cmd`. Se SmartScreen avvisa, scegli
 *Ulteriori informazioni* → *Esegui comunque*.

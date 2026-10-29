@@ -111,9 +111,14 @@ rates in front of the producer and see straight away where the estimate lands.
 Download the installer for your system from the
 [Releases page](../../releases), then:
 
-**macOS** — **right-click** the `.command` file and choose **Open**
-(not a double-click: the installer is not signed with an Apple certificate, and
-a double-click gets blocked).
+**macOS** — two steps, because macOS puts two different obstacles in the way:
+
+1. **Double-click the zip** to unpack it. Downloading a file over the web
+   strips its Unix permissions, so the installer arrives unable to run. Inside
+   the zip the permission survives.
+2. **Right-click** the unpacked `.command` file and choose **Open** — not a
+   double-click. The installer is not signed with an Apple certificate, and
+   only this way do you get the dialog with the Open button.
 
 **Windows** — double-click the `.cmd` file. If SmartScreen warns you, choose
 *More info* → *Run anyway*.
