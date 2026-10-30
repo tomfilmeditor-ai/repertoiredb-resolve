@@ -5,7 +5,8 @@ Legge la timeline e dice quanto costa il repertorio che c'è dentro.
 
 🇬🇧 [Read in English](README.md)
 
-![Versione](https://img.shields.io/badge/versione-1.3.0-blue)
+![Versione](https://img.shields.io/badge/versione-1.4.0-blue)
+![Lingua](https://img.shields.io/badge/interfaccia-Italiano%20%7C%20English-blue)
 ![Sistema](https://img.shields.io/badge/sistema-macOS%20%7C%20Windows-lightgrey)
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![Licenza](https://img.shields.io/badge/licenza-MIT-green)
@@ -87,6 +88,10 @@ forfait (il video li usa tutti; fotografie e giornali usano a clip o forfait)
 - **Utilizzo minimo** — quando l'uso effettivo sta sotto il minimo fatturabile
   dell'archivio, il report mostra la differenza
 - **Audio eccedente** — l'audio usato oltre la copertura video è conteggiato al 50%
+- **Lingua** — italiano o inglese, scelta nel `Config`, oppure lasciata su
+  **Automatico**, che segue la lingua del sistema operativo (non quella di
+  DaVinci Resolve: sono due impostazioni diverse). La seguono l'interfaccia, il
+  CSV del preventivo e il foglio Excel
 - **Valuta** — scegli il simbolo con cui vengono mostrati gli importi (euro,
   dollaro, sterlina, franco svizzero, dollaro canadese e australiano, yuan, yen,
   won). Cambia **solo il simbolo**: niente viene convertito e non si applica
@@ -155,10 +160,11 @@ quando ha finito. Poi, in Resolve:
     Workspace > Scripts > Comp > RepertoireDB_Config
 
 Se installi a mano: gli script in `scripts/` vanno in
-`Fusion/Scripts/Comp/RepertoireDB/`, i tre moduli in `modules/`
-(`LogManager.lua`, `BugReportDialog.lua` e, dalla 1.3.0, `Settings.lua`) vanno in
-`Fusion/Modules/Lua/` — **due cartelle diverse**. Con i moduli nel posto
-sbagliato gli script non partono.
+`Fusion/Scripts/Comp/RepertoireDB/`, i quattro moduli in `modules/` vanno in
+`Fusion/Modules/Lua/` — **due cartelle diverse**. Con `LogManager.lua`,
+`BugReportDialog.lua` o `Settings.lua` nel posto sbagliato gli script non
+partono. `Strings.lua`, che contiene la traduzione inglese, è l'unica
+eccezione: senza, l'interfaccia resta semplicemente in italiano.
 
 ---
 
@@ -167,12 +173,12 @@ sbagliato gli script non partono.
 - **DaVinci Resolve Studio 19 o 20.** La versione gratuita non funziona: dalla
   19.1 l'interfaccia di scripting su cui sono costruiti questi strumenti
   (UIManager) è solo per Studio.
-- **L'interfaccia è in italiano.** Lo strumento è nato per i documentari
-  dell'autore e non è mai stato tradotto. Vedi la
-  [discussione sul supporto multilingua](../../issues).
-  Gli importi però non sono più solo in euro: dalla 1.3.0 la valuta si sceglie
-  nel `Config` e vale per interfaccia, CSV ed Excel. È un simbolo, non una
-  conversione — le tariffe vanno inserite nella valuta in cui licenzi davvero.
+- **Italiano e inglese.** Dalla 1.4.0 l'interfaccia, il CSV del preventivo e il
+  foglio Excel esistono anche in inglese. Al primo avvio la lingua segue il
+  sistema operativo; puoi anche fissarla nel `Config`.
+  E gli importi non sono più solo in euro: la valuta si sceglie nel `Config`.
+  È un simbolo, non una conversione — le tariffe vanno inserite nella valuta in
+  cui licenzi davvero.
 - macOS o Windows
 - Solo per l'esportazione in Excel: Python 3 con `openpyxl` (c'è uno script di
   supporto, `RepertoireDB_Installer.lua`, che lo prepara)
@@ -196,6 +202,14 @@ sbagliato gli script non partono.
 - **Una valuta per volta.** L'impostazione della valuta è un simbolo valido per
   tutto il database. Se licenzi da archivi in valute diverse nello stesso
   progetto, le tariffe vanno convertite a mano prima di inserirle
+- **I valori salvati nel file di configurazione restano in italiano** — `A clip`,
+  `Al minuto`, `Video`, `Fotografie`. È voluto, non una dimenticanza: quelle
+  parole sono la chiave con cui lo strumento ritrova il modello di prezzo di
+  ogni banca dati, e sono anche il formato della colonna `Model` nei CSV di
+  importazione. Tenerle ferme vuol dire che un database creato in inglese si
+  apre in italiano e viceversa. A schermo vedi l'etichetta tradotta; nel file
+  resta la chiave. Lo stesso vale per l'esportazione CSV del Config, che è
+  pensata per essere reimportata, anche nella copia di qualcun altro
 - Lo strumento legge quello che c'è in timeline. Non può sapere nulla di
   condizioni contrattuali che non hai inserito nel database delle banche dati
 

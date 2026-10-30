@@ -61,7 +61,7 @@ dati configurate.
 INSTALLAZIONE MANUALE — ATTENZIONE: DUE CARTELLE DIVERSE
 ---------------------------------------------------------
 Dalla v1.2.12 i file non vanno piu tutti nella stessa cartella.
-I due moduli condivisi vanno in una cartella DIVERSA da quella degli
+I moduli condivisi vanno in una cartella DIVERSA da quella degli
 script: se finiscono nel posto sbagliato, gli script non partono e
 danno l'errore "module 'LogManager' not found".
 
@@ -102,6 +102,12 @@ danno l'errore "module 'LogManager' not found".
   File:
     LogManager.lua        — sistema di log condiviso (v1.2.12+)
     BugReportDialog.lua   — finestra di segnalazione bug (v1.2.13+)
+    Settings.lua          — valuta, lingua, etichette (v1.3.0+)
+    Strings.lua           — traduzioni dell'interfaccia (v1.4.0+)
+
+  Settings.lua serve sempre: senza, gli script non partono.
+  Strings.lua e invece facoltativo: se manca, l'interfaccia resta in
+  italiano senza dare errore. Chi lavora in italiano puo ignorarlo.
 
   Perche una cartella diversa: Resolve cerca i moduli richiamati con
   require() solo in Modules/Lua, non nella cartella degli script.
@@ -191,6 +197,64 @@ Puoi aggiungere banche dati in tre modi:
 
 La configurazione viene salvata in repertoire_db.json nella stessa
 cartella degli script. E un file JSON testuale, copiabile come backup.
+
+
+LINGUA DELL'INTERFACCIA (v1.4.0+)
+----------------------------------
+In alto nella finestra Config, accanto al titolo, c'e un menu "Lingua"
+con tre voci:
+
+  Automatico — <lingua>   segue la lingua del sistema operativo
+  Italiano
+  English
+
+La voce "Automatico" dice fra parentesi su cosa e caduta la rilevazione,
+cosi si vede subito quale lingua ha scelto senza doverlo indovinare.
+
+IMPORTANTE: la rilevazione guarda la lingua del SISTEMA OPERATIVO, non
+quella di DaVinci Resolve. Sono due impostazioni diverse: si puo avere
+Resolve in inglese su un Mac in italiano, o il contrario. Quella che
+conta e la lingua del sistema, perche e quella che hai scelto per
+leggere.
+
+Come viene rilevata:
+
+  macOS     la lista delle lingue dell'interfaccia di sistema
+            (Impostazioni di Sistema > Generali > Lingua e Zona)
+  Windows   la lingua dell'interfaccia utente di Windows
+  Linux     le variabili d'ambiente LANG / LC_ALL / LC_MESSAGES
+
+Se la lingua del sistema e una che lo strumento non conosce — per
+esempio tedesco o francese — l'interfaccia resta in italiano. Non resta
+mai vuota.
+
+Cambiando lingua, i menu e l'elenco delle banche dati si aggiornano
+subito: non serve riaprire la finestra. Le altre finestre (Calculator,
+Monitor) prendono la lingua nuova quando vengono riaperte.
+
+COSA VIENE TRADOTTO
+  - l'interfaccia dei tre script
+  - le intestazioni e le note del foglio Excel esportato, compresi i
+    nomi dei tre fogli (Summary / Segments / Config)
+  - i nomi dei modelli di pricing e dei tipi di media mostrati nei menu
+
+COSA NON VIENE TRADOTTO, E PERCHE
+  I valori scritti nel tuo file di configurazione restano in italiano:
+  "A clip", "Al minuto", "Video", "Fotografie" e simili. Non e una
+  dimenticanza. Quelle parole sono la chiave con cui il programma
+  ritrova il modello di prezzo di ogni banca dati, e sono anche il
+  contenuto della colonna Model nei CSV di importazione, che e un
+  formato documentato e gia distribuito. Tradurle vorrebbe dire che un
+  database creato con l'interfaccia inglese non si aprirebbe piu con
+  quella italiana. A schermo vedi l'etichetta tradotta; nel file resta
+  la chiave.
+
+  L'esportazione CSV del Config resta anch'essa con i valori in
+  italiano, perche e reimportabile: un file esportato da te deve poter
+  rientrare nello strumento di chiunque, in qualunque lingua lo usi.
+
+Il CSV del preventivo (quello del Calculator) e invece un report da
+leggere, e viene tradotto.
 
 
 SCELTA DELLA VALUTA (v1.3.0+)
@@ -1040,6 +1104,27 @@ CHANGELOG
 
 Cronologia completa e dettagliata: CHANGELOG.md nella cartella degli
 script. Qui le novita in sintesi.
+
+v1.4.0 (2026-10-30)
+  - LINGUA DELL'INTERFACCIA: italiano e inglese, con rilevazione
+    automatica dalla lingua del SISTEMA OPERATIVO (non da quella di
+    DaVinci Resolve: sono due impostazioni diverse). Menu "Lingua" in
+    alto nel Config. Vedi sezione LINGUA DELL'INTERFACCIA
+  - Tradotto anche il foglio Excel esportato: intestazioni, note,
+    legenda e i nomi dei tre fogli (Summary / Segments / Config)
+  - I valori salvati nel file di configurazione restano in italiano ed
+    e voluto: sono la chiave con cui il programma ritrova il modello di
+    prezzo, e il formato della colonna Model nei CSV di importazione.
+    Un database creato in inglese si apre in italiano e viceversa
+  - Nuovo modulo Strings.lua in Fusion/Modules/Lua/ con le traduzioni.
+    E FACOLTATIVO: se manca, l'interfaccia resta in italiano senza
+    dare errore
+  - Il pulsante di esportazione del Calculator si chiama ora
+    "Esporta CSV / XLSX": apre un dialogo con entrambi i formati
+  - Corretti i plurali: prima erano costruiti attaccando una lettera
+    alla parola ("second" + "o"/"i"), cosa che funziona solo in
+    italiano. Ora sono due frasi complete e ogni lingua pluralizza a
+    modo suo
 
 v1.3.0 (2026-10-30)
   - FIX IMPORTANTE, foglio Excel: le comparse ripetute dello stesso

@@ -17,7 +17,7 @@
 
 local json = require("dkjson")
 
-local VERSION = "1.3.0"
+local VERSION = "1.4.0"
 
 local LogManager = require("LogManager")
 LogManager:init()
@@ -26,6 +26,11 @@ local BugReportDialog = require("BugReportDialog")
 
 -- Settings: valuta scelta dall'utente (solo il simbolo, nessuna conversione)
 local Settings = require("Settings")
+-- Traduzione del testo dell'interfaccia. La chiave è il testo italiano
+-- stesso: se la traduzione manca, o Strings.lua non è installato,
+-- compare l'italiano invece di una sigla.
+local T = Settings.t
+
 local CUR = Settings.cur()
 
 -- Rileva la versione di DaVinci Resolve in modo difensivo
@@ -203,7 +208,12 @@ local function importFromCSV(path)
                 table.insert(fields, field)
             end
             local name  = fields[1]
-            local model = fields[2]
+            -- Il CSV porta il valore canonico ("A clip"), che è il formato
+            -- documentato e distribuito nei template. Ma se qualcuno compila
+            -- il file guardando l'interfaccia tradotta e scrive "Per clip",
+            -- va riconosciuto comunque: modelValue riporta l'etichetta al suo
+            -- valore e, se non la conosce, restituisce quello che ha ricevuto.
+            local model = Settings.modelValue(fields[2])
             local rate  = tonumber(fields[3])
             local block = tonumber(fields[4])
             if name and name ~= "" and model and rate then
@@ -211,25 +221,25 @@ local function importFromCSV(path)
                     name      = name,
                     model     = model,
                     rate      = rate,
-                    blockSec  = (model == "A blocchi (custom)") and block or nil,
+                    blockSec  = (model == Settings.MODEL.BLOCK) and block or nil,
                     discounts = {},
                 }
-                local mediaType  = fields[5] or "Video"
+                local mediaType  = Settings.mediaValue(fields[5]) or Settings.MEDIA.VIDEO
                 local audioExStr = fields[6] or ""
-                entry.mediaType  = (mediaType ~= "") and mediaType or "Video"
+                entry.mediaType  = (mediaType ~= "") and mediaType or Settings.MEDIA.VIDEO
                 entry.audioExcess = (audioExStr == "true" or audioExStr == "Si" or audioExStr == "1") or nil
 
                 local col = 7
                 while fields[col] and fields[col] ~= "" do
                     local thresh = tonumber(fields[col])
                     local pct    = tonumber(fields[col+1])
-                    local tipo   = fields[col+2] or "flat"
+                    local tipo   = fields[col+2] or Settings.DISCOUNT.FLAT
                     if thresh and pct then
                         local disc = {
                             pct  = pct,
-                            type = tipo:lower():find("prog") and "progressive" or "flat",
+                            type = tipo:lower():find("prog") and Settings.DISCOUNT.PROGRESSIVE or Settings.DISCOUNT.FLAT,
                         }
-                        if model == "A clip" then
+                        if model == Settings.MODEL.CLIP then
                             disc.threshold_clips = math.floor(thresh)
                         else
                             disc.threshold_sec = thresh
@@ -299,22 +309,22 @@ local function tagSelectedClips(db)
 
     local dlg = disp:AddWindow({
         ID = "TagDlg",
-        WindowTitle = "Tagga Clip Selezionate",
+        WindowTitle  = T("Tagga Clip Selezionate"),
         Geometry = { 250, 250, 560, 180 },
         ui:VGroup{
             ui:Label{
                 ID   = "LblSel",
-                Text = "Seleziona le clip nel Media Pool, poi clicca Applica.",
+                Text  = T("Seleziona le clip nel Media Pool, poi clicca Applica."),
                 MinimumSize = { 520, 20 },
             },
             ui:HGroup{
                 ui:ComboBox{ ID="ComboArch", MinimumSize={ 350, 26 } },
-                ui:Button{   ID="BtnApplica",  Text="✓  Applica",         MinimumSize={ 120, 28 } },
+                ui:Button{   ID="BtnApplica",  Text = T("✓  Applica"),         MinimumSize={ 120, 28 } },
             },
             ui:HGroup{
-                ui:Button{ ID="BtnClearKw",  Text="✕  Rimuovi keyword",  MinimumSize={ 170, 26 } },
+                ui:Button{ ID="BtnClearKw",  Text = T("✕  Rimuovi keyword"),  MinimumSize={ 170, 26 } },
                 ui:HGap{},
-                ui:Button{ ID="BtnTagClose", Text="Chiudi",              MinimumSize={  90, 26 } },
+                ui:Button{ ID="BtnTagClose", Text = T("Chiudi"),              MinimumSize={  90, 26 } },
             },
             ui:Label{ ID="LblTagStatus", Text="", WordWrap=true, MinimumSize={520, 36} },
         },
@@ -329,12 +339,11 @@ local function tagSelectedClips(db)
     local function getCurrentSel()
         local sel = mp:GetSelectedClips()
         if not sel or #sel == 0 then
-            dlg:Find("LblTagStatus").Text = "⚠  Nessuna clip selezionata nel Media Pool."
-            dlg:Find("LblSel").Text = "Seleziona le clip nel Media Pool, poi clicca Applica."
+            dlg:Find("LblTagStatus").Text  = T("⚠  Nessuna clip selezionata nel Media Pool.")
+            dlg:Find("LblSel").Text  = T("Seleziona le clip nel Media Pool, poi clicca Applica.")
             return nil
         end
-        dlg:Find("LblSel").Text = string.format(
-            "%d clip selezionate — scegli la banca dati e clicca Applica.", #sel)
+        dlg:Find("LblSel").Text = string.format(T("%d clip selezionate — scegli la banca dati e clicca Applica."), #sel)
         return sel
     end
 
@@ -345,8 +354,8 @@ local function tagSelectedClips(db)
         local entry = db[idx]
         if not entry then return end
 
-        local mediaType = entry.mediaType or "Video"
-        local needsImage = (mediaType == "Fotografie" or mediaType == "Giornali")
+        local mediaType = entry.mediaType or Settings.MEDIA.VIDEO
+        local needsImage = (mediaType == Settings.MEDIA.PHOTO or mediaType == Settings.MEDIA.PRESS)
 
         -- Mappa nomi archivi per identificare keyword di repertorio
         local dbNameSet = {}
@@ -387,15 +396,14 @@ local function tagSelectedClips(db)
         -- Messaggio risultato
         local msg = ""
         if tagged > 0 then
-            msg = string.format("✓  %d clip → \"%s\"", tagged, entry.name)
+            msg = string.format(T("✓  %d clip → \"%s\""), tagged, entry.name)
             if tagged < #sel then msg = msg .. "  —" end
         end
         if #skipped > 0 then
             msg = msg .. string.format(
-                "  ⚠ %d file video ignorat%s: %s",
-                #skipped,
-                #skipped == 1 and "o" or "i",
-                table.concat(skipped, ", "))
+                #skipped == 1 and T("  ⚠ %d file video ignorato: %s")
+                              or  T("  ⚠ %d file video ignorati: %s"),
+                #skipped, table.concat(skipped, ", "))
         end
         if tagged == 0 and #skipped == 0 then
             msg = "⚠  Nessuna clip aggiornata."
@@ -428,7 +436,7 @@ local function tagSelectedClips(db)
             count = count + 1
         end
         dlg:Find("LblTagStatus").Text =
-            string.format("✓  Keyword repertorio rimosse da %d clip  — seleziona il prossimo gruppo.", count)
+            string.format(T("✓  Keyword repertorio rimosse da %d clip  — seleziona il prossimo gruppo."), count)
     end
 
     dlg.On.BtnTagClose.Clicked = function() disp:ExitLoop() end
@@ -441,21 +449,23 @@ local function tagSelectedClips(db)
     return true, ""
 end
 
-local MODELS         = { "A clip", "Al secondo", "A blocchi (custom)", "Al minuto", "Forfait" }
-local MODELS_MEDIA   = { "A clip", "Forfait" }
-local MEDIA_TYPES    = { "Video", "Fotografie", "Giornali" }
-local DISCOUNT_TYPES = { "Flat (su tutto)", "Progressivo (solo eccedenza)" }
+-- Valori di dominio: vengono da Settings, che è l'unico posto dove sono
+-- definiti. Sono le stringhe salvate in repertoire_db.json e usate nella
+-- colonna Model dei CSV: NON si traducono. Quello che si traduce sono le
+-- etichette mostrate, che si chiedono a Settings.modelLabel e compagnia.
+local MODELS         = Settings.MODELS
+local MODELS_MEDIA   = Settings.MODELS_MEDIA
+local MEDIA_TYPES    = Settings.MEDIA_TYPES
+local DISCOUNT_TYPES = Settings.DISCOUNT_TYPES
 
 -- modelIndex(name) → number — Ritorna l'indice (1-based) del modello nella lista MODELS, default 1.
 local function modelIndex(name)
-    for i, v in ipairs(MODELS) do if v == name then return i end end
-    return 1
+    return Settings.indexOf(MODELS, name)
 end
 
 -- mediaTypeIndex(name) → number — Ritorna l'indice (1-based) del tipo media in MEDIA_TYPES, default 1 (Video).
 local function mediaTypeIndex(name)
-    for i, v in ipairs(MEDIA_TYPES) do if v == name then return i end end
-    return 1
+    return Settings.indexOf(MEDIA_TYPES, name)
 end
 
 -- secToLabel(sec) → string — Formatta un valore in secondi come stringa leggibile (es. "2m 30s").
@@ -463,7 +473,7 @@ local function secToLabel(sec)
     if not sec then return "" end
     local m = math.floor(sec / 60)
     local s = sec % 60
-    return m > 0 and string.format("%dm %02ds", m, s) or string.format("%ds", s)
+    return m > 0 and string.format(T("%dm %02ds"), m, s) or string.format(T("%ds"), s)
 end
 
 -- ── Memory/Configuration helpers ─────────────────────────────────────────────
@@ -559,27 +569,33 @@ end
 local function buildWindow(db)
     local win = disp:AddWindow({
         ID = "DBConfig",
-        WindowTitle = "RepertoireDB v" .. VERSION .. " — Configurazione  |  © Tommaso Feraboli Film Editor",
+        WindowTitle = string.format(T("RepertoireDB v%s — Configurazione  |  © Tommaso Feraboli Film Editor"), VERSION),
         Geometry = { 80, 80, 920, 820 },
         MinimumSize = { 900, 800 },
         ui:VGroup{
             ui:HGroup{
-                ui:Label{ Text = "RepertoireDB v" .. VERSION,
+                ui:Label{ Text  = T("RepertoireDB v") .. VERSION,
                     Font = ui:Font{ PixelSize = 20 },
                     StyleSheet = "color: #DCDCDC;" },
                 ui:HGap{},
-                ui:Label{ Text = "Valuta:", MinimumSize={55,22},
+                ui:Label{ Text  = T("Lingua:"), MinimumSize={55,22},
+                    Alignment = { AlignRight = true, AlignVCenter = true },
+                    StyleSheet = "color: #B4B4B4;" },
+                ui:ComboBox{ ID="LangCombo", MinimumSize={190,26},
+                    ToolTip = T("Lingua dell'interfaccia. Con Automatico segue la lingua del sistema operativo, non quella di DaVinci Resolve: sono due impostazioni diverse.") },
+                ui:HGap{10},
+                ui:Label{ Text  = T("Valuta:"), MinimumSize={55,22},
                     Alignment = { AlignRight = true, AlignVCenter = true },
                     StyleSheet = "color: #B4B4B4;" },
                 ui:ComboBox{ ID="CurrencyCombo", MinimumSize={210,26},
-                    ToolTip="Cambia solo il simbolo mostrato. Gli importi non vengono convertiti." },
+                    ToolTip = T("Cambia solo il simbolo mostrato. Gli importi non vengono convertiti.") },
                 ui:HGap{10},
                 ui:VGroup{
-                    ui:Label{ Text = "© Tommaso Feraboli Film Editor",
+                    ui:Label{ Text  = T("© Tommaso Feraboli Film Editor"),
                         Alignment = { AlignRight = true },
                         Font = ui:Font{ PixelSize = 13 },
                         StyleSheet = "color: #D2D2D2;" },
-                    ui:Label{ Text = "MIT License",
+                    ui:Label{ Text  = T("MIT License"),
                         Alignment = { AlignRight = true },
                         Font = ui:Font{ PixelSize = 10, Italic = true },
                         StyleSheet = "color: #828282; margin-top: 0px;" },
@@ -590,9 +606,9 @@ local function buildWindow(db)
             ui:VGroup{ ID="PaneBanche",
             ui:HGroup{
                 ui:Button{ ID="BtnSearch", Text="🔍", MinimumSize={30,26},
-                    ToolTip="Cerca per nome o tipo media",
+                    ToolTip = T("Cerca per nome o tipo media"),
                     StyleSheet = "QPushButton { border-radius: 4px; font-size: 15px; }" },
-                ui:LineEdit{ ID="SearchField", PlaceholderText="Cerca banca…",
+                ui:LineEdit{ ID="SearchField", PlaceholderText = T("Cerca banca…"),
                     MinimumSize={200,26}, Hidden=true },
                 ui:HGap{},
             },
@@ -605,50 +621,50 @@ local function buildWindow(db)
                 MinimumSize = { 800, 270 },
             },
             ui:HGroup{
-                ui:Button{ ID="BtnNew",         Text="+ Nuova",           MinimumSize={110,28} },
-                ui:Button{ ID="BtnEdit",        Text="✎ Modifica",        MinimumSize={110,28}, Enabled=false },
-                ui:Button{ ID="BtnDelete",      Text="Elimina",           MinimumSize={100,28} },
-                ui:Button{ ID="BtnImport",      Text="Importa JSON/CSV…", MinimumSize={160,28} },
-                ui:Button{ ID="BtnExportCSV",   Text="Esporta CSV",       MinimumSize={120,28} },
-                ui:Button{ ID="BtnTag", Text="Tagga Clip Selezionate", MinimumSize={190,28} },
+                ui:Button{ ID="BtnNew",         Text = T("+ Nuova"),           MinimumSize={110,28} },
+                ui:Button{ ID="BtnEdit",        Text = T("✎ Modifica"),        MinimumSize={110,28}, Enabled=false },
+                ui:Button{ ID="BtnDelete",      Text = T("Elimina"),           MinimumSize={100,28} },
+                ui:Button{ ID="BtnImport",      Text = T("Importa JSON/CSV…"), MinimumSize={160,28} },
+                ui:Button{ ID="BtnExportCSV",   Text = T("Esporta CSV"),       MinimumSize={120,28} },
+                ui:Button{ ID="BtnTag", Text = T("Tagga Clip Selezionate"), MinimumSize={190,28} },
                 ui:HGap{},
             },
 
             ui:Label{ Text = "──────────────────────────────────────────────────────────────────" },
 
             ui:HGroup{
-                ui:Label{ Text="Nome banca dati:", MinimumSize={140,20} },
-                ui:LineEdit{ ID="FieldName", PlaceholderText="Inserisci nome nuova banca", MinimumSize={380,24} },
+                ui:Label{ Text = T("Nome banca dati:"), MinimumSize={140,20} },
+                ui:LineEdit{ ID="FieldName", PlaceholderText = T("Inserisci nome nuova banca"), MinimumSize={380,24} },
             },
             ui:HGroup{
-                ui:Label{ Text="Tipo media:", MinimumSize={140,20} },
+                ui:Label{ Text = T("Tipo media:"), MinimumSize={140,20} },
                 ui:ComboBox{ ID="FieldType", MinimumSize={200,24} },
                 ui:HGap{},
             },
             ui:HGroup{
-                ui:Label{ Text="Modello pricing:", MinimumSize={140,20} },
+                ui:Label{ Text = T("Modello pricing:"), MinimumSize={140,20} },
                 ui:ComboBox{ ID="FieldModel", MinimumSize={200,24} },
-                ui:Label{ Text="Durata blocco (sec):", MinimumSize={130,20} },
+                ui:Label{ Text = T("Durata blocco (sec):"), MinimumSize={130,20} },
                 ui:SpinBox{ ID="FieldBlock", Minimum=1, Maximum=3600, Value=30, MinimumSize={70,24} },
             },
             ui:HGroup{
-                ui:Label{ Text="Utilizzo minimo (sec):", MinimumSize={140,20} },
+                ui:Label{ Text = T("Utilizzo minimo (sec):"), MinimumSize={140,20} },
                 ui:SpinBox{ ID="FieldUtilMin", Minimum=0, Maximum=86400, Value=0, MinimumSize={80,24} },
-                ui:Label{ Text="(0 = nessun minimo — si fattura almeno questo utilizzo anche se l'effettivo è inferiore)",
+                ui:Label{ Text = T("(0 = nessun minimo — si fattura almeno questo utilizzo anche se l'effettivo è inferiore)"),
                     MinimumSize={420,20}, StyleSheet="color:#AAAAAA; font-size:9px;" },
                 ui:HGap{},
             },
             ui:HGroup{
-                ui:Label{ Text="Tariffa (" .. CUR .. "):", MinimumSize={140,20} },
-                ui:LineEdit{ ID="FieldRate", PlaceholderText="es. 5300.00", MinimumSize={120,24} },
-                ui:Label{ Text="(per unità del modello scelto)   " },
-                ui:CheckBox{ ID="ChkNoRate", Text="Tariffa da definire", Checked=false },
+                ui:Label{ Text=string.format(T("Tariffa (%s):"), CUR), MinimumSize={140,20} },
+                ui:LineEdit{ ID="FieldRate", PlaceholderText = T("es. 5300.00"), MinimumSize={120,24} },
+                ui:Label{ Text = T("(per unità del modello scelto)   ") },
+                ui:CheckBox{ ID="ChkNoRate", Text = T("Tariffa da definire"), Checked=false },
                 ui:HGap{},
-                ui:CheckBox{ ID="ChkAudioExcess", Text="Calcola audio eccedente", Checked=false,
-                    ToolTip="Se attivo, i secondi audio senza copertura video vengono fatturati al 50% della tariffa" },
+                ui:CheckBox{ ID="ChkAudioExcess", Text = T("Calcola audio eccedente"), Checked=false,
+                    ToolTip = T("Se attivo, i secondi audio senza copertura video vengono fatturati al 50% della tariffa") },
             },
 
-            ui:Label{ Text = "── Sconti ─────────────────────────────────────────────────────" },
+            ui:Label{ Text  = T("── Sconti ─────────────────────────────────────────────────────") },
             ui:Tree{
                 ID = "DiscountList",
                 RootIsDecorated = false,
@@ -657,56 +673,56 @@ local function buildWindow(db)
                 MinimumSize = { 800, 85 },
             },
             ui:HGroup{
-                ui:Label{ ID="LblDscThreshold", Text="Soglia (sec):", MinimumSize={90,20} },
+                ui:Label{ ID="LblDscThreshold", Text = T("Soglia (sec):"), MinimumSize={90,20} },
                 ui:SpinBox{ ID="DscThreshold", Minimum=1, Maximum=36000, Value=180, MinimumSize={80,24} },
-                ui:Label{ Text="Sconto %:", MinimumSize={70,20} },
+                ui:Label{ Text = T("Sconto %:"), MinimumSize={70,20} },
                 ui:SpinBox{ ID="DscPct", Minimum=1, Maximum=100, Value=15, MinimumSize={70,24} },
-                ui:Label{ Text="Tipo:", MinimumSize={40,20} },
+                ui:Label{ Text = T("Tipo:"), MinimumSize={40,20} },
                 ui:ComboBox{ ID="DscType", MinimumSize={210,24} },
-                ui:Button{ ID="BtnDscAdd",    Text="+ Aggiungi sconto", MinimumSize={130,28} },
-                ui:Button{ ID="BtnDscDelete", Text="Elimina",    MinimumSize={80,28} },
+                ui:Button{ ID="BtnDscAdd",    Text = T("+ Aggiungi sconto"), MinimumSize={130,28} },
+                ui:Button{ ID="BtnDscDelete", Text = T("Elimina"),    MinimumSize={80,28} },
             },
 
             ui:Label{ Text = "──────────────────────────────────────────────────────────────────" },
 
             ui:HGroup{
-                ui:Button{ ID="BtnSave",   Text="Salva modifiche", MinimumSize={160,32} },
-                ui:Button{ ID="BtnCancel", Text="Annulla",         MinimumSize={100,32} },
-                ui:Button{ ID="BtnOpenCalculator", Text="⏭️  Apri Calcolatore", MinimumSize={180,32} },
+                ui:Button{ ID="BtnSave",   Text = T("Salva modifiche"), MinimumSize={160,32} },
+                ui:Button{ ID="BtnCancel", Text = T("Annulla"),         MinimumSize={100,32} },
+                ui:Button{ ID="BtnOpenCalculator", Text = T("⏭️  Apri Calcolatore"), MinimumSize={180,32} },
                 ui:HGap{},
                 ui:Label{ ID="LblStatus", Text="" },
                 ui:VGroup{ Spacing=1,
                     ui:Button{ ID="BtnReadme", Text="📖", MinimumSize={80,52},
-                        ToolTip="Apre il file README",
+                        ToolTip = T("Apre il file README"),
                         StyleSheet=[[QPushButton{font-size:48px;background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #8B7B1A,stop:1 #5A4E0A);color:#FFE97A;border-radius:5px;border:1px solid #5A4E0A;}QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #A08A20,stop:1 #8B7B1A);}]] },
-                    ui:Label{ Text="Guida", Alignment={AlignHCenter=true},
+                    ui:Label{ Text = T("Guida"), Alignment={AlignHCenter=true},
                         StyleSheet="color:#8B7B1A; font-size:10px; margin:0;" },
                 },
                 ui:VGroup{ Spacing=1,
                     ui:Button{ ID="BtnPayPal", Text="☕", MinimumSize={80,52},
-                        ToolTip="Supporta il progetto su PayPal",
+                        ToolTip = T("Supporta il progetto su PayPal"),
                         StyleSheet=[[QPushButton{font-size:48px;background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #2196C0,stop:1 #1565A0);color:#FFFFFF;border-radius:5px;border:1px solid #1565A0;}QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #2AA8D8,stop:1 #2196C0);}]] },
-                    ui:Label{ Text="Offrimi un caffè", Alignment={AlignHCenter=true},
+                    ui:Label{ Text = T("Offrimi un caffè"), Alignment={AlignHCenter=true},
                         StyleSheet="color:#2196C0; font-size:10px; margin:0;" },
                 },
                 ui:VGroup{ Spacing=1,
                     ui:Button{ ID="BtnBug", Text="🐛", MinimumSize={80,52},
-                        ToolTip="Invia una segnalazione bug a tomfilmeditor.tools@gmail.com",
+                        ToolTip = T("Invia una segnalazione bug a tomfilmeditor.tools@gmail.com"),
                         StyleSheet=[[QPushButton{font-size:48px;background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #B03020,stop:1 #7A1E10);color:#FFFFFF;border-radius:5px;border:1px solid #7A1E10;}QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #C84030,stop:1 #B03020);}]] },
-                    ui:Label{ Text="Riporta bug", Alignment={AlignHCenter=true},
+                    ui:Label{ Text = T("Riporta bug"), Alignment={AlignHCenter=true},
                         StyleSheet="color:#B03020; font-size:10px; margin:0;" },
                 },
             },
             }, -- PaneBanche
             ui:VGroup{ ID="PaneMemorie", Hidden=true,
                 ui:HGroup{
-                    ui:Label{ Text="Configurazioni salvate:",
+                    ui:Label{ Text = T("Configurazioni salvate:"),
                         Font=ui:Font{ Bold=true },
                         StyleSheet="color:#DCDCDC; font-size:13px;" },
                     ui:HGap{},
-                    ui:Button{ ID="BtnMemPrev", Text="↩  Ripristina precedente",
+                    ui:Button{ ID="BtnMemPrev", Text = T("↩  Ripristina precedente"),
                         MinimumSize={210,28},
-                        ToolTip="Ripristina la configurazione precedente all'ultimo caricamento",
+                        ToolTip = T("Ripristina la configurazione precedente all'ultimo caricamento"),
                         Enabled=false },
                 },
                 ui:Tree{
@@ -718,14 +734,14 @@ local function buildWindow(db)
                 },
                 ui:Label{ Text = "──────────────────────────────────────────────────────────────────" },
                 ui:HGroup{
-                    ui:Label{ Text="Nome:", MinimumSize={60,20} },
-                    ui:LineEdit{ ID="MemoryName", PlaceholderText="Nome configurazione…", MinimumSize={340,26} },
+                    ui:Label{ Text = T("Nome:"), MinimumSize={60,20} },
+                    ui:LineEdit{ ID="MemoryName", PlaceholderText = T("Nome configurazione…"), MinimumSize={340,26} },
                     ui:HGap{},
-                    ui:Button{ ID="BtnMemSave", Text="💾  Salva configurazione attuale", MinimumSize={250,28} },
+                    ui:Button{ ID="BtnMemSave", Text = T("💾  Salva configurazione attuale"), MinimumSize={250,28} },
                 },
                 ui:HGroup{
-                    ui:Button{ ID="BtnMemLoad",   Text="📂  Carica selezionata",  MinimumSize={180,32} },
-                    ui:Button{ ID="BtnMemDelete", Text="🗑  Elimina selezionata", MinimumSize={180,32} },
+                    ui:Button{ ID="BtnMemLoad",   Text = T("📂  Carica selezionata"),  MinimumSize={180,32} },
+                    ui:Button{ ID="BtnMemDelete", Text = T("🗑  Elimina selezionata"), MinimumSize={180,32} },
                     ui:HGap{},
                     ui:Label{ ID="LblMemStatus", Text="" },
                 },
@@ -733,11 +749,21 @@ local function buildWindow(db)
         },
     })
 
-    -- Popola ComboBox
+    -- Popola ComboBox. I menu mostrano le ETICHETTE, nell'ordine delle
+    -- liste di valori: così l'indice scelto resta l'indice del valore da
+    -- salvare, e la lettura più sotto non cambia.
     local combo = win:Find("FieldModel")
-    for _, m in ipairs(MODELS) do combo:AddItem(m) end
+    for _, m in ipairs(Settings.modelLabels(MODELS)) do combo:AddItem(m) end
     local comboType = win:Find("FieldType")
-    for _, t in ipairs(MEDIA_TYPES) do comboType:AddItem(t) end
+    for _, t in ipairs(Settings.mediaLabels()) do comboType:AddItem(t) end
+
+    -- Lingua: "Automatico" segue il SISTEMA OPERATIVO, non Resolve
+    local langOptions = Settings.languageOptions()
+    local comboLang   = win:Find("LangCombo")
+    for _, o in ipairs(langOptions) do comboLang:AddItem(o.label) end
+    for i, o in ipairs(langOptions) do
+        if o.code == Settings.langChoice() then comboLang.CurrentIndex = i - 1 break end
+    end
 
     -- Valuta: solo il simbolo mostrato, nessuna conversione degli importi
     local comboCur = win:Find("CurrencyCombo")
@@ -753,10 +779,10 @@ local function buildWindow(db)
     -- Preserva la selezione se il modello esiste nella nuova lista.
     local function rebuildModelCombo(isMedia)
         local combo2   = win:Find("FieldModel")
-        local prevName = currentModelList[combo2.CurrentIndex + 1] or "A clip"
+        local prevName = currentModelList[combo2.CurrentIndex + 1] or Settings.MODEL.CLIP
         local newList  = isMedia and MODELS_MEDIA or MODELS
         combo2:Clear()
-        for _, m in ipairs(newList) do combo2:AddItem(m) end
+        for _, m in ipairs(Settings.modelLabels(newList)) do combo2:AddItem(m) end
         currentModelList = newList
         for i, m in ipairs(newList) do
             if m == prevName then combo2.CurrentIndex = i - 1; return end
@@ -764,7 +790,7 @@ local function buildWindow(db)
         combo2.CurrentIndex = 0
     end
     local comboD = win:Find("DscType")
-    for _, t in ipairs(DISCOUNT_TYPES) do comboD:AddItem(t) end
+    for _, t in ipairs(Settings.discountLabels()) do comboD:AddItem(t) end
 
     local currentDiscounts   = {}
     local editingIndex        = nil
@@ -775,9 +801,9 @@ local function buildWindow(db)
         local tree = win:Find("DiscountList")
         tree:Clear()
         local hdr = tree:NewItem()
-        hdr.Text[0] = "Soglia"
-        hdr.Text[1] = "Sconto %"
-        hdr.Text[2] = "Tipo"
+        hdr.Text[0] = T("Soglia")
+        hdr.Text[1] = T("Sconto %")
+        hdr.Text[2] = T("Tipo")
         tree:SetHeaderItem(hdr)
         tree.ColumnCount = 3
         tree:SetColumnWidth(0, 220)
@@ -786,12 +812,12 @@ local function buildWindow(db)
         for _, d in ipairs(currentDiscounts) do
             local it = tree:NewItem()
             if d.threshold_clips then
-                it.Text[0] = "Oltre " .. d.threshold_clips .. " clip"
+                it.Text[0] = string.format(T("Oltre %s clip"), d.threshold_clips)
             else
-                it.Text[0] = "Oltre " .. secToLabel(d.threshold_sec)
+                it.Text[0] = T("Oltre ") .. secToLabel(d.threshold_sec)
             end
             it.Text[1] = tostring(d.pct) .. "%"
-            it.Text[2] = (d.type == "progressive") and "Progressivo (solo eccedenza)" or "Flat (su tutto)"
+            it.Text[2] = Settings.discountLabel(d.type or Settings.DISCOUNT.FLAT)
             tree:AddTopLevelItem(it)
         end
     end
@@ -800,10 +826,10 @@ local function buildWindow(db)
     local function updateDscThresholdUI()
         local typeWidget = win:Find("FieldType")
         local typeIdx    = typeWidget and typeWidget.CurrentIndex or 0
-        local mt         = MEDIA_TYPES[typeIdx + 1] or "Video"
+        local mt         = MEDIA_TYPES[typeIdx + 1] or Settings.MEDIA.VIDEO
         local selModel   = currentModelList[win:Find("FieldModel").CurrentIndex + 1]
-        local isClip     = (mt ~= "Video") or
-                           (selModel == "A clip") or (selModel == "Forfait")
+        local isClip     = (mt ~= Settings.MEDIA.VIDEO) or
+                           (selModel == Settings.MODEL.CLIP) or (selModel == Settings.MODEL.FLAT)
         local lbl = win:Find("LblDscThreshold")
         if lbl then
             lbl.Text = isClip and "Soglia (clip):" or "Soglia (sec):"
@@ -815,14 +841,14 @@ local function buildWindow(db)
         tree:Clear()
 
         local hdr = tree:NewItem()
-        hdr.Text[0] = "Nome"
-        hdr.Text[1] = "Tipo"
-        hdr.Text[2] = "Modello"
-        hdr.Text[3] = "Blocco"
-        hdr.Text[4] = "Util.Min."
-        hdr.Text[5] = "Tariffa " .. CUR
-        hdr.Text[6] = "Sconti"
-        hdr.Text[7] = "Audio Ecc."
+        hdr.Text[0] = T("Nome")
+        hdr.Text[1] = T("Tipo")
+        hdr.Text[2] = T("Modello")
+        hdr.Text[3] = T("Blocco")
+        hdr.Text[4] = T("Util.Min.")
+        hdr.Text[5] = T("Tariffa ") .. CUR
+        hdr.Text[6] = T("Sconti")
+        hdr.Text[7] = T("Audio Ecc.")
         tree:SetHeaderItem(hdr)
         tree.ColumnCount = 8
         tree:SetColumnWidth(0, 200)
@@ -838,9 +864,15 @@ local function buildWindow(db)
         local lo = filterText ~= "" and string.lower(filterText) or nil
         local sortedDB = {}
         for _, e in ipairs(db) do
+            local mt = e.mediaType or Settings.MEDIA.VIDEO
+            -- La ricerca guarda sia il valore salvato sia l'etichetta
+            -- mostrata: con l'interfaccia in inglese si cerca "Photos",
+            -- ma nel database c'è scritto "Fotografie".
             if not lo or
                string.lower(e.name):find(lo, 1, true) or
-               string.lower(e.mediaType or "Video"):find(lo, 1, true) then
+               string.lower(mt):find(lo, 1, true) or
+               string.lower(Settings.mediaLabel(mt)):find(lo, 1, true) or
+               string.lower(Settings.modelLabel(e.model or "")):find(lo, 1, true) then
                 table.insert(sortedDB, e)
             end
         end
@@ -849,9 +881,9 @@ local function buildWindow(db)
         for _, e in ipairs(sortedDB) do
             local it = tree:NewItem()
             it.Text[0] = e.name
-            it.Text[1] = e.mediaType or "Video"
-            it.Text[2] = e.model
-            it.Text[3] = (e.model == "A blocchi (custom)") and tostring(e.blockSec or 30) or "—"
+            it.Text[1] = Settings.mediaLabel(e.mediaType or Settings.MEDIA.VIDEO)
+            it.Text[2] = Settings.modelLabel(e.model)
+            it.Text[3] = (e.model == Settings.MODEL.BLOCK) and tostring(e.blockSec or 30) or "—"
             it.Text[4] = (e.utilMin and e.utilMin > 0) and (tostring(e.utilMin) .. "s") or "—"
             it.Text[5] = e.rate and string.format("%.2f", e.rate) or "—"
             local nd = e.discounts and #e.discounts or 0
@@ -874,9 +906,9 @@ local function buildWindow(db)
         local tree = win:Find("MemoryList")
         tree:Clear()
         local hdr = tree:NewItem()
-        hdr.Text[0] = "Nome"
-        hdr.Text[1] = "Salvata il"
-        hdr.Text[2] = "Banche"
+        hdr.Text[0] = T("Nome")
+        hdr.Text[1] = T("Salvata il")
+        hdr.Text[2] = T("Banche")
         tree:SetHeaderItem(hdr)
         tree.ColumnCount = 3
         tree:SetColumnWidth(0, 430)
@@ -956,11 +988,11 @@ local function buildWindow(db)
         win:Find("ChkNoRate").Checked = noRate
         win:Find("FieldRate").Enabled = not noRate
         win:Find("FieldRate").Text = noRate and "" or string.format("%.2f", e.rate)
-        local tiIdx = mediaTypeIndex(e.mediaType or "Video") - 1
+        local tiIdx = mediaTypeIndex(e.mediaType or Settings.MEDIA.VIDEO) - 1
         local typeWidget = win:Find("FieldType")
         if typeWidget then typeWidget.CurrentIndex = tiIdx end
         rebuildModelCombo(tiIdx > 0)
-        local targetModel = e.model or "A clip"
+        local targetModel = e.model or Settings.MODEL.CLIP
         local comboModel = win:Find("FieldModel")
         local found = false
         for i, m in ipairs(currentModelList) do
@@ -973,7 +1005,7 @@ local function buildWindow(db)
         currentDiscounts = {}
         if e.discounts then
             for _, d in ipairs(e.discounts) do
-                local disc = { pct = d.pct, type = d.type or "flat" }
+                local disc = { pct = d.pct, type = d.type or Settings.DISCOUNT.FLAT }
                 if d.threshold_clips then
                     disc.threshold_clips = d.threshold_clips
                 else
@@ -1003,12 +1035,59 @@ local function buildWindow(db)
     win.On.BtnEdit.Clicked = function(ev)
         if editingIndex then
             setFormReadOnly(false)
-            win:Find("LblStatus").Text = "Modifica abilitata — premi Salva per confermare."
+            win:Find("LblStatus").Text  = T("Modifica abilitata — premi Salva per confermare.")
         end
     end
 
     -- Cambio valuta: salva la scelta e avvisa che non è una conversione.
     -- Senza quell'avviso, il primo che cambia valuta pensa a un errore di calcolo.
+    win.On.LangCombo.CurrentIndexChanged = function(ev)
+        local sel = langOptions[win:Find("LangCombo").CurrentIndex + 1]
+        if not sel then return end
+        if sel.code == Settings.langChoice() then return end   -- nessun cambio reale
+
+        local prima = Settings.lang()
+        local ok, err = Settings.saveLang(sel.code)
+        if not ok then
+            LogManager:error("Config.lua", "Salvataggio lingua fallito: " .. tostring(err))
+            win:Find("LblStatus").Text = "⚠ " .. tostring(err)
+            return
+        end
+        Settings.reload()
+        local dopo = Settings.lang()
+        LogManager:info("Config.lua", "Lingua impostata: " .. sel.code
+            .. (sel.code == "auto" and (" (sistema: " .. dopo .. ")") or ""))
+
+        -- I menu dei modelli e dei tipi media mostrano etichette tradotte:
+        -- vanno ricostruiti, altrimenti restano nella lingua precedente
+        -- finché la finestra non viene riaperta.
+        local cbModel = win:Find("FieldModel")
+        local prevModel = currentModelList[cbModel.CurrentIndex + 1]
+        cbModel:Clear()
+        for _, m in ipairs(Settings.modelLabels(currentModelList)) do cbModel:AddItem(m) end
+        cbModel.CurrentIndex = Settings.indexOf(currentModelList, prevModel) - 1
+
+        local cbType = win:Find("FieldType")
+        local prevType = MEDIA_TYPES[cbType.CurrentIndex + 1]
+        cbType:Clear()
+        for _, t in ipairs(Settings.mediaLabels()) do cbType:AddItem(t) end
+        cbType.CurrentIndex = Settings.indexOf(MEDIA_TYPES, prevType) - 1
+
+        local cbDsc = win:Find("DscType")
+        local prevDsc = DISCOUNT_TYPES[cbDsc.CurrentIndex + 1]
+        cbDsc:Clear()
+        for _, t in ipairs(Settings.discountLabels()) do cbDsc:AddItem(t) end
+        cbDsc.CurrentIndex = Settings.indexOf(DISCOUNT_TYPES, prevDsc) - 1
+
+        refreshTree()
+
+        if prima ~= dopo then
+            win:Find("LblStatus").Text  = string.format(
+                sel.code == "auto" and T("Lingua interfaccia: %s  (automatica, dal sistema)")
+                                   or  T("Lingua interfaccia: %s"), dopo)
+        end
+    end
+
     win.On.CurrencyCombo.CurrentIndexChanged = function(ev)
         local sel = Settings.CURRENCIES[win:Find("CurrencyCombo").CurrentIndex + 1]
         if not sel then return end
@@ -1026,22 +1105,19 @@ local function buildWindow(db)
 
         local msg = disp:AddWindow({
             ID = "CurNotice",
-            WindowTitle = "Valuta cambiata",
+            WindowTitle  = T("Valuta cambiata"),
             Geometry = { 420, 300, 460, 190 },
             ui:VGroup{
-                ui:Label{ Text = "Valuta impostata: " .. sel.label,
+                ui:Label{ Text  = T("Valuta impostata: ") .. sel.label,
                     Font = ui:Font{ PixelSize = 14, Bold = true } },
-                ui:Label{ WordWrap = true, Text =
-                    "Cambia solo il simbolo mostrato accanto agli importi. "
-                    .. "Le cifre che hai inserito NON vengono convertite: "
-                    .. "restano i numeri che hai scritto tu." },
+                ui:Label{ WordWrap = true, Text = T(
+                    "Cambia solo il simbolo mostrato accanto agli importi. Le cifre che hai inserito NON vengono convertite: restano i numeri che hai scritto tu.") },
                 ui:Label{ WordWrap = true,
                     Font = ui:Font{ Italic = true },
                     StyleSheet = "color: #B4B4B4;",
-                    Text = "Le finestre già aperte (Calculator, Monitor) "
-                    .. "mostrano il simbolo nuovo dopo essere state riaperte." },
+                    Text = T("Le finestre già aperte (Calculator, Monitor) mostrano il simbolo nuovo dopo essere state riaperte.") },
                 ui:HGroup{ ui:HGap{},
-                    ui:Button{ ID = "BtnCurOk", Text = "Ho capito", MinimumSize = {110,30} } },
+                    ui:Button{ ID = "BtnCurOk", Text  = T("Ho capito"), MinimumSize = {110,30} } },
             },
         })
         msg.On.BtnCurOk.Clicked = function() disp:ExitLoop() end
@@ -1096,7 +1172,7 @@ local function buildWindow(db)
                     editingDiscountIdx = i
                     win:Find("DscThreshold").Value   = d.threshold_clips or d.threshold_sec or 1
                     win:Find("DscPct").Value          = d.pct
-                    win:Find("DscType").CurrentIndex  = (d.type == "progressive") and 1 or 0
+                    win:Find("DscType").CurrentIndex  = Settings.indexOf(DISCOUNT_TYPES, d.type or Settings.DISCOUNT.FLAT) - 1
                     break
                 end
             end
@@ -1127,9 +1203,9 @@ local function buildWindow(db)
             saveDB(db)
             clearForm()
             refreshTree()
-            win:Find("LblStatus").Text = "Eliminata."
+            win:Find("LblStatus").Text  = T("Eliminata.")
         else
-            win:Find("LblStatus").Text = "⚠ Seleziona prima una voce dalla lista."
+            win:Find("LblStatus").Text  = T("⚠ Seleziona prima una voce dalla lista.")
         end
     end
 
@@ -1142,7 +1218,7 @@ local function buildWindow(db)
         local rateS = win:Find("FieldRate").Text
 
         if name == "" then
-            win:Find("LblStatus").Text = "⚠ Inserisci un nome."
+            win:Find("LblStatus").Text  = T("⚠ Inserisci un nome.")
             return false
         end
         local noRate = win:Find("ChkNoRate").Checked
@@ -1150,15 +1226,15 @@ local function buildWindow(db)
         if not noRate then
             rate = tonumber(rateS)
             if not rate then
-                win:Find("LblStatus").Text = "⚠ Tariffa non valida (usa il punto come decimale)."
+                win:Find("LblStatus").Text  = T("⚠ Tariffa non valida (usa il punto come decimale).")
                 return false
             end
         end
 
         local typeWidget = win:Find("FieldType")
         local typeIdx    = typeWidget and typeWidget.CurrentIndex or 0
-        local mediaType  = MEDIA_TYPES[typeIdx + 1] or "Video"
-        local model = currentModelList[win:Find("FieldModel").CurrentIndex + 1] or "A clip"
+        local mediaType  = MEDIA_TYPES[typeIdx + 1] or Settings.MEDIA.VIDEO
+        local model = currentModelList[win:Find("FieldModel").CurrentIndex + 1] or Settings.MODEL.CLIP
         local block   = win:Find("FieldBlock").Value
         local utilMin = win:Find("FieldUtilMin").Value
 
@@ -1168,7 +1244,7 @@ local function buildWindow(db)
             mediaType   = mediaType,
             model       = model,
             rate        = rate,
-            blockSec    = (model == "A blocchi (custom)") and block or nil,
+            blockSec    = (model == Settings.MODEL.BLOCK) and block or nil,
             utilMin     = (utilMin and utilMin > 0) and utilMin or nil,
             discounts   = #currentDiscounts > 0 and currentDiscounts or nil,
             audioExcess = audioExcess or nil,
@@ -1179,7 +1255,7 @@ local function buildWindow(db)
         else
             for _, e in ipairs(db) do
                 if e.name == name then
-                    win:Find("LblStatus").Text = "⚠ Nome già esistente."
+                    win:Find("LblStatus").Text  = T("⚠ Nome già esistente.")
                     return false
                 end
             end
@@ -1203,20 +1279,20 @@ local function buildWindow(db)
     win.On.BtnDscAdd.Clicked = function(ev)
         local thresh = win:Find("DscThreshold").Value
         local pct    = win:Find("DscPct").Value
-        local tipo   = win:Find("DscType").CurrentIndex == 1 and "progressive" or "flat"
+        local tipo   = DISCOUNT_TYPES[win:Find("DscType").CurrentIndex + 1] or Settings.DISCOUNT.FLAT
 
         -- Determina se il modello usa soglie per clip o per secondi
         local typeWidget = win:Find("FieldType")
         local typeIdx    = typeWidget and typeWidget.CurrentIndex or 0
-        local mt         = MEDIA_TYPES[typeIdx + 1] or "Video"
+        local mt         = MEDIA_TYPES[typeIdx + 1] or Settings.MEDIA.VIDEO
         local selModel2  = currentModelList[win:Find("FieldModel").CurrentIndex + 1]
-        local isClip     = (mt ~= "Video") or
-                           (selModel2 == "A clip") or (selModel2 == "Forfait")
+        local isClip     = (mt ~= Settings.MEDIA.VIDEO) or
+                           (selModel2 == Settings.MODEL.CLIP) or (selModel2 == Settings.MODEL.FLAT)
 
         -- Verifica duplicati
         for _, d in ipairs(currentDiscounts) do
             if (d.threshold_clips or d.threshold_sec) == thresh then
-                win:Find("LblStatus").Text = "⚠ Soglia già presente."
+                win:Find("LblStatus").Text  = T("⚠ Soglia già presente.")
                 return
             end
         end
@@ -1246,7 +1322,7 @@ local function buildWindow(db)
                 doSave(false, "✓ Sconto rimosso e salvato.")
             end
         else
-            win:Find("LblStatus").Text = "⚠ Seleziona uno sconto dalla lista."
+            win:Find("LblStatus").Text  = T("⚠ Seleziona uno sconto dalla lista.")
         end
     end
 
@@ -1256,7 +1332,7 @@ local function buildWindow(db)
         end)
         if not success then
             print("RepertoireDB Config — BtnSave error: " .. tostring(errMsg))
-            win:Find("LblStatus").Text = "⚠ Errore interno (vedi Console Resolve)"
+            win:Find("LblStatus").Text  = T("⚠ Errore interno (vedi Console Resolve)")
         end
     end
 
@@ -1284,7 +1360,7 @@ local function buildWindow(db)
         elseif path:lower():match("%.csv$") then
             data, err = importFromCSV(path)
         else
-            win:Find("LblStatus").Text = "⚠ Formato non supportato (usa .json o .csv)" return
+            win:Find("LblStatus").Text  = T("⚠ Formato non supportato (usa .json o .csv)") return
         end
         if err then
             win:Find("LblStatus").Text = "⚠ " .. err return
@@ -1293,15 +1369,15 @@ local function buildWindow(db)
         -- Dialog selezione modalità importazione
         local dlg = disp:AddWindow({
             ID = "ImportDlg",
-            WindowTitle = "Modalità importazione",
+            WindowTitle  = T("Modalità importazione"),
             Geometry = { 300, 300, 420, 200 },
             ui:VGroup{
-                ui:Label{ Text = "Come vuoi importare le " .. #data .. " banche dati?", MinimumSize={380,24} },
+                ui:Label{ Text  = string.format(T("Come vuoi importare le %d banche dati?"), #data), MinimumSize={380,24} },
                 ui:Label{ Text = "" },
-                ui:Button{ ID="BtnModeAdd",     Text="Aggiungi nuove (salta duplicati)",        MinimumSize={380,32} },
-                ui:Button{ ID="BtnModeUpdate",  Text="Aggiorna esistenti (sovrascrive duplicati)", MinimumSize={380,32} },
-                ui:Button{ ID="BtnModeReplace", Text="Sostituisci tutto (cancella e reimporta)", MinimumSize={380,32} },
-                ui:Button{ ID="BtnModeCancel",  Text="Annulla",                                  MinimumSize={380,28} },
+                ui:Button{ ID="BtnModeAdd",     Text = T("Aggiungi nuove (salta duplicati)"),        MinimumSize={380,32} },
+                ui:Button{ ID="BtnModeUpdate",  Text = T("Aggiorna esistenti (sovrascrive duplicati)"), MinimumSize={380,32} },
+                ui:Button{ ID="BtnModeReplace", Text = T("Sostituisci tutto (cancella e reimporta)"), MinimumSize={380,32} },
+                ui:Button{ ID="BtnModeCancel",  Text = T("Annulla"),                                  MinimumSize={380,28} },
             },
         })
 
@@ -1355,13 +1431,12 @@ local function buildWindow(db)
         saveDB(db)
         refreshTree()
         clearForm()
-        win:Find("LblStatus").Text = string.format(
-            "✓ Aggiunte: %d  Aggiornate: %d  Totale DB: %d", added, updated, #db)
+        win:Find("LblStatus").Text = string.format(T("✓ Aggiunte: %d  Aggiornate: %d  Totale DB: %d"), added, updated, #db)
     end
 
     win.On.BtnExportCSV.Clicked = function(ev)
         if #db == 0 then
-            win:Find("LblStatus").Text = "⚠ Nessuna banca dati da esportare."
+            win:Find("LblStatus").Text  = T("⚠ Nessuna banca dati da esportare.")
             return
         end
 
@@ -1375,7 +1450,7 @@ local function buildWindow(db)
         local path = dir .. filename
         local f = io.open(path, "w")
         if not f then
-            win:Find("LblStatus").Text = "⚠ Impossibile scrivere in: " .. dir
+            win:Find("LblStatus").Text  = T("⚠ Impossibile scrivere in: ") .. dir
             return
         end
 
@@ -1388,9 +1463,9 @@ local function buildWindow(db)
 
         for _, e in ipairs(db) do
             local rateStr  = e.rate and string.format("%.4f", e.rate) or ""
-            local blockStr = (e.model == "A blocchi (custom)") and tostring(e.blockSec or 30) or ""
+            local blockStr = (e.model == Settings.MODEL.BLOCK) and tostring(e.blockSec or 30) or ""
             local audioStr = e.audioExcess and "true" or "false"
-            local mediaStr = e.mediaType or "Video"
+            local mediaStr = e.mediaType or Settings.MEDIA.VIDEO
 
             local line = string.format('"%s","%s","%s","%s","%s","%s"',
                 e.name, e.model or "", rateStr, blockStr, mediaStr, audioStr)
@@ -1398,12 +1473,12 @@ local function buildWindow(db)
             if e.discounts and #e.discounts > 0 then
                 for _, d in ipairs(e.discounts) do
                     local thresh
-                    if e.model == "A clip" then
+                    if e.model == Settings.MODEL.CLIP then
                         thresh = tostring(d.threshold_clips or 0)
                     else
                         thresh = tostring(d.threshold_sec or 0)
                     end
-                    local tipoStr = (d.type == "progressive") and "progressive" or "flat"
+                    local tipoStr = (d.type == Settings.DISCOUNT.PROGRESSIVE) and Settings.DISCOUNT.PROGRESSIVE or Settings.DISCOUNT.FLAT
                     line = line .. string.format(',"%s","%.4f","%s"', thresh, d.pct or 0, tipoStr)
                 end
             end
@@ -1412,12 +1487,12 @@ local function buildWindow(db)
         end
 
         f:close()
-        win:Find("LblStatus").Text = "✓ CSV esportato: " .. path
+        win:Find("LblStatus").Text  = T("✓ CSV esportato: ") .. path
     end
 
     win.On.BtnTag.Clicked = function(ev)
         if #db == 0 then
-            win:Find("LblStatus").Text = "⚠ Nessuna banca dati configurata." return
+            win:Find("LblStatus").Text  = T("⚠ Nessuna banca dati configurata.") return
         end
         local ok, msg = tagSelectedClips(db)
         if not ok then
@@ -1436,24 +1511,24 @@ local function buildWindow(db)
         local rawName = win:Find("MemoryName").Text or ""
         local name = rawName:match("^%s*(.-)%s*$")
         if name == "" then
-            win:Find("LblMemStatus").Text = "⚠ Inserisci un nome per la configurazione."
+            win:Find("LblMemStatus").Text  = T("⚠ Inserisci un nome per la configurazione.")
             return
         end
         name = name:gsub('[/\\:*?"<>|]', "_")
         local ok, err = saveMemoryFile(name, db)
         if ok then
-            win:Find("LblMemStatus").Text = "✓ Configurazione \"" .. name .. "\" salvata  (" .. #db .. " banche)."
+            win:Find("LblMemStatus").Text = string.format(T("✓ Configurazione \"%s\" salvata  (%d banche)."), name, #db)
             win:Find("MemoryName").Text = ""
             refreshMemoryList()
         else
-            win:Find("LblMemStatus").Text = "⚠ Errore: " .. (err or "")
+            win:Find("LblMemStatus").Text  = T("⚠ Errore: ") .. (err or "")
         end
     end
 
     win.On.BtnMemLoad.Clicked = function(ev)
         local sel = win:Find("MemoryList"):CurrentItem()
         if not sel then
-            win:Find("LblMemStatus").Text = "⚠ Seleziona una configurazione dalla lista."
+            win:Find("LblMemStatus").Text  = T("⚠ Seleziona una configurazione dalla lista.")
             return
         end
         local name = sel.Text[0]
@@ -1461,15 +1536,15 @@ local function buildWindow(db)
         local confirmed = false
         local dlg = disp:AddWindow({
             ID = "MemConfirmDlg",
-            WindowTitle = "Carica configurazione",
+            WindowTitle  = T("Carica configurazione"),
             Geometry = { 280, 280, 440, 145 },
             ui:VGroup{
-                ui:Label{ Text = "Caricando  \"" .. name .. "\"\nl'attuale configurazione verrà persa.\n\nProcedere?",
+                ui:Label{ Text = string.format(T("Caricando  \"%s\"\nl'attuale configurazione verrà persa.\n\nProcedere?"), name),
                     Alignment = { AlignHCenter = true } },
                 ui:HGroup{
                     ui:HGap{},
-                    ui:Button{ ID="BtnMemCfmYes", Text="Carica",  MinimumSize={130,30} },
-                    ui:Button{ ID="BtnMemCfmNo",  Text="Annulla", MinimumSize={100,30} },
+                    ui:Button{ ID="BtnMemCfmYes", Text = T("Carica"),  MinimumSize={130,30} },
+                    ui:Button{ ID="BtnMemCfmNo",  Text = T("Annulla"), MinimumSize={100,30} },
                     ui:HGap{},
                 },
             },
@@ -1488,7 +1563,7 @@ local function buildWindow(db)
         local path = dir .. sep .. name .. ".json"
         local newData, loadErr = loadMemoryFile(path)
         if not newData then
-            win:Find("LblMemStatus").Text = "⚠ Errore caricamento: " .. (loadErr or "")
+            win:Find("LblMemStatus").Text  = T("⚠ Errore caricamento: ") .. (loadErr or "")
             return
         end
 
@@ -1497,14 +1572,14 @@ local function buildWindow(db)
         saveDB(db)
         refreshTree()
         clearForm()
-        win:Find("LblMemStatus").Text = "✓ Configurazione \"" .. name .. "\" caricata  (" .. #db .. " banche)."
+        win:Find("LblMemStatus").Text = string.format(T("✓ Configurazione \"%s\" caricata  (%d banche)."), name, #db)
         refreshMemoryList()
     end
 
     win.On.BtnMemDelete.Clicked = function(ev)
         local sel = win:Find("MemoryList"):CurrentItem()
         if not sel then
-            win:Find("LblMemStatus").Text = "⚠ Seleziona una configurazione dalla lista."
+            win:Find("LblMemStatus").Text  = T("⚠ Seleziona una configurazione dalla lista.")
             return
         end
         local name = sel.Text[0]
@@ -1512,7 +1587,7 @@ local function buildWindow(db)
         local sep = package.config:sub(1,1)
         os.remove(dir .. sep .. name .. ".json")
         refreshMemoryList()
-        win:Find("LblMemStatus").Text = "Eliminata: \"" .. name .. "\""
+        win:Find("LblMemStatus").Text = string.format(T("Eliminata: \"%s\""), name)
     end
 
     win.On.BtnMemPrev.Clicked = function(ev)
@@ -1521,7 +1596,7 @@ local function buildWindow(db)
         local path = dir .. sep .. "_previous.json"
         local newData, loadErr = loadMemoryFile(path)
         if not newData then
-            win:Find("LblMemStatus").Text = "⚠ Nessun backup precedente trovato."
+            win:Find("LblMemStatus").Text  = T("⚠ Nessun backup precedente trovato.")
             return
         end
         for i = #db, 1, -1 do table.remove(db, i) end
@@ -1530,7 +1605,7 @@ local function buildWindow(db)
         refreshTree()
         clearForm()
         os.remove(path)
-        win:Find("LblMemStatus").Text = "✓ Configurazione precedente ripristinata  (" .. #db .. " banche)."
+        win:Find("LblMemStatus").Text  = string.format(T("✓ Configurazione precedente ripristinata  (%d banche)."), #db)
         refreshMemoryList()
     end
 

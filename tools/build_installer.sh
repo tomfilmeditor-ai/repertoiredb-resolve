@@ -50,6 +50,31 @@ for f in RepertoireDB_Config.lua RepertoireDB_Calculator.lua RepertoireDB_Monito
 done
 echo "Versioni allineate nei tre script: OK"
 
+# ── Traduzioni complete ─────────────────────────────────────────────────
+# Ogni testo mostrato all'utente passa per T("..."): se una di quelle frasi
+# non ha traduzione, chi usa l'interfaccia in inglese vede una riga italiana
+# in mezzo. Non è un errore che si nota generando il pacchetto, quindi la
+# build si ferma.
+TOOLS_TRAD="$(cd "$(dirname "$0")/../../tools-traduzione" 2>/dev/null && pwd)"
+if [ -n "$TOOLS_TRAD" ] && [ -f "$TOOLS_TRAD/verifica_traduzioni.py" ]; then
+    if ! python3 -I "$TOOLS_TRAD/verifica_traduzioni.py" > /tmp/rdb_trad.log 2>&1; then
+        echo "ERRORE: le traduzioni non sono complete o coerenti."
+        sed 's/^/        /' /tmp/rdb_trad.log
+        echo "        Correggi tools-traduzione/traduzioni_en.py e rigenera con genera_en.py."
+        exit 1
+    fi
+    echo "Traduzioni complete e coerenti: OK"
+else
+    echo "ATTENZIONE: verifica_traduzioni.py non trovato, controllo saltato."
+fi
+
+# Il modulo delle traduzioni deve esistere e contenere qualcosa
+if [ ! -s "$SRC_MODULES/Strings.lua" ]; then
+    echo "ERRORE: $SRC_MODULES/Strings.lua manca o è vuoto."
+    echo "        Generalo con tools-traduzione/genera_en.py e copialo nei moduli."
+    exit 1
+fi
+
 # ── Staging ─────────────────────────────────────────────────────────────
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
@@ -102,7 +127,7 @@ if [ "$INCLUDE_DB" = "yes" ]; then
 fi
 
 # Moduli condivisi (vanno in Fusion/Modules/Lua/ — cartella DIVERSA)
-for f in LogManager.lua BugReportDialog.lua Settings.lua; do
+for f in LogManager.lua BugReportDialog.lua Settings.lua Strings.lua; do
     cp "$SRC_MODULES/$f" "$STAGE/payload/Modules_Lua/"
 done
 

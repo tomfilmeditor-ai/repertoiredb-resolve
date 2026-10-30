@@ -68,7 +68,7 @@ Where it installs — note that it is TWO different folders:
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Scripts/Comp/RepertoireDB/
 
-  Shared modules (LogManager, BugReportDialog, Settings):
+  Shared modules (LogManager, BugReportDialog, Settings, Strings):
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Modules/Lua/
 
@@ -129,7 +129,8 @@ IF SOMETHING GOES WRONG
 "module 'LogManager' not found"
     The two shared modules are not in Fusion/Modules/Lua. This is the one
     mistake the installer exists to prevent — if you installed by hand,
-    move LogManager.lua, BugReportDialog.lua and Settings.lua there.
+    move LogManager.lua, BugReportDialog.lua, Settings.lua and
+    Strings.lua there.
 
 "The scripts do not open at all"
     Check you are on Resolve **Studio**. The free version cannot run them.
@@ -222,7 +223,7 @@ Dove installa — sono DUE cartelle diverse:
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Scripts/Comp/RepertoireDB/
 
-  Moduli condivisi (LogManager, BugReportDialog, Settings):
+  Moduli condivisi (LogManager, BugReportDialog, Settings, Strings):
     ~/Library/Application Support/Blackmagic Design/DaVinci Resolve/
       Fusion/Modules/Lua/
 

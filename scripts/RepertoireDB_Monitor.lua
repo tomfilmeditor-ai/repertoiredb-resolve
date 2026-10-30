@@ -15,12 +15,20 @@
 -- Sostieni il progetto: https://paypal.me/acoffeefortom
 -- ============================================================
 
-local VERSION = "1.3.0"
+local VERSION = "1.4.0"
 
 local LogManager = require("LogManager")
 LogManager:init()
 
 local BugReportDialog = require("BugReportDialog")
+-- Valori di dominio ed etichette tradotte: definiti una volta sola in
+-- Settings, mai riscritti a mano qui.
+local Settings = require("Settings")
+-- Traduzione del testo dell'interfaccia. La chiave è il testo italiano
+-- stesso: se la traduzione manca, o Strings.lua non è installato,
+-- compare l'italiano invece di una sigla.
+local T = Settings.t
+
 
 local function getResolveVersion()
     local ok, result = pcall(function()
@@ -254,9 +262,9 @@ local function scan()
 
                     videoSegsMap[dbName] = (videoSegsMap[dbName] or 0) + 1
 
-                    local mt = entry.mediaType or "Video"
+                    local mt = entry.mediaType or Settings.MEDIA.VIDEO
 
-                    if mt == "Video" then
+                    if mt == Settings.MEDIA.VIDEO then
                         local key = mi:GetUniqueId() .. "|" .. dbName
                         if not videoGroups[key] then
                             videoGroups[key] = { dbName=dbName, covered={}, uniqueFr=0 }
@@ -335,20 +343,20 @@ local COLOR_B = { R=0.65, G=0.65, B=0.65, A=1 }
 
 local win = disp:AddWindow({
     ID = "RDB_Monitor",
-    WindowTitle = "RepertoireDB v" .. VERSION .. " — Monitor",
+    WindowTitle = string.format(T("RepertoireDB v%s — Monitor"), VERSION),
     Geometry = { 120, 120, 640, 560 },
     ui:VGroup{
         ui:HGroup{
-            ui:Label{ Text = "RepertoireDB v" .. VERSION,
+            ui:Label{ Text  = T("RepertoireDB v") .. VERSION,
                 Font = ui:Font{ PixelSize = 20 },
                 StyleSheet = "color: #DCDCDC;" },
             ui:HGap{},
             ui:VGroup{
-                ui:Label{ Text = "© Tommaso Feraboli Film Editor",
+                ui:Label{ Text  = T("© Tommaso Feraboli Film Editor"),
                     Alignment = { AlignRight = true },
                     Font = ui:Font{ PixelSize = 13 },
                     StyleSheet = "color: #D2D2D2;" },
-                ui:Label{ Text = "MIT License",
+                ui:Label{ Text  = T("MIT License"),
                     Alignment = { AlignRight = true },
                     Font = ui:Font{ PixelSize = 10, Italic = true },
                     StyleSheet = "color: #828282; margin-top: 0px;" },
@@ -359,11 +367,11 @@ local win = disp:AddWindow({
             RootIsDecorated = false,
             AlternatingRowColors = true,
             SelectionMode = "SingleSelection",
-            ToolTip = "Clicca su una banca per selezionarne i segmenti in timeline",
+            ToolTip  = T("Clicca su una banca per selezionarne i segmenti in timeline"),
             MinimumSize = { 620, 380 },
         },
         ui:HGroup{
-            ui:CheckBox{ ID="ChkFoto", Text="Mostra Fotografie e Giornali",
+            ui:CheckBox{ ID="ChkFoto", Text = T("Mostra Fotografie e Giornali"),
                 Checked=false,
                 Font = ui:Font{ PixelSize=FONT_SIZE_SUB },
                 MinimumSize={280,22} },
@@ -374,29 +382,29 @@ local win = disp:AddWindow({
                 Font = ui:Font{ PixelSize=FONT_SIZE_SUB, Italic=true },
                 MinimumSize={300,22} },
             ui:HGap{},
-            ui:Button{ ID="BtnRefresh", Text="↺  Aggiorna", MinimumSize={120,30} },
+            ui:Button{ ID="BtnRefresh", Text = T("↺  Aggiorna"), MinimumSize={120,30} },
         },
         ui:HGroup{
             ui:HGap{},
             ui:VGroup{ Spacing=1,
                 ui:Button{ ID="BtnReadme", Text="📖", MinimumSize={80,52},
-                    ToolTip="Apre il file README",
+                    ToolTip = T("Apre il file README"),
                     StyleSheet=[[QPushButton{font-size:48px;background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #8B7B1A,stop:1 #5A4E0A);color:#FFE97A;border-radius:5px;border:1px solid #5A4E0A;}QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #A08A20,stop:1 #8B7B1A);}]] },
-                ui:Label{ Text="Guida", Alignment={AlignHCenter=true},
+                ui:Label{ Text = T("Guida"), Alignment={AlignHCenter=true},
                     StyleSheet="color:#8B7B1A; font-size:10px; margin:0;" },
             },
             ui:VGroup{ Spacing=1,
                 ui:Button{ ID="BtnCoffee", Text="☕", MinimumSize={80,52},
-                    ToolTip="Supporta il progetto su PayPal",
+                    ToolTip = T("Supporta il progetto su PayPal"),
                     StyleSheet=[[QPushButton{font-size:48px;background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #2196C0,stop:1 #1565A0);color:#FFFFFF;border-radius:5px;border:1px solid #1565A0;}QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #2AA8D8,stop:1 #2196C0);}]] },
-                ui:Label{ Text="Offrimi un caffè", Alignment={AlignHCenter=true},
+                ui:Label{ Text = T("Offrimi un caffè"), Alignment={AlignHCenter=true},
                     StyleSheet="color:#2196C0; font-size:10px; margin:0;" },
             },
             ui:VGroup{ Spacing=1,
                 ui:Button{ ID="BtnBug", Text="🐛", MinimumSize={80,52},
-                    ToolTip="Invia una segnalazione bug a tomfilmeditor.tools@gmail.com",
+                    ToolTip = T("Invia una segnalazione bug a tomfilmeditor.tools@gmail.com"),
                     StyleSheet=[[QPushButton{font-size:48px;background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #B03020,stop:1 #7A1E10);color:#FFFFFF;border-radius:5px;border:1px solid #7A1E10;}QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #C84030,stop:1 #B03020);}]] },
-                ui:Label{ Text="Riporta bug", Alignment={AlignHCenter=true},
+                ui:Label{ Text = T("Riporta bug"), Alignment={AlignHCenter=true},
                     StyleSheet="color:#B03020; font-size:10px; margin:0;" },
             },
             ui:HGap{},
@@ -405,10 +413,10 @@ local win = disp:AddWindow({
 })
 
 local hdr = win:Find("BancaTree"):NewItem()
-hdr.Text[0] = "Banca dati"
-hdr.Text[1] = "Durata / Clip"
-hdr.Text[2] = "Seg. Video"
-hdr.Text[3] = "Seg. Audio"
+hdr.Text[0] = T("Banca dati")
+hdr.Text[1] = T("Durata / Clip")
+hdr.Text[2] = T("Seg. Video")
+hdr.Text[3] = T("Seg. Audio")
 win:Find("BancaTree"):SetHeaderItem(hdr)
 win:Find("BancaTree").ColumnCount = 4
 win:Find("BancaTree"):SetColumnWidth(0, 220)
@@ -471,7 +479,7 @@ local function refresh()
         it.TextColor[2] = color
         it.TextColor[3] = color
         tree:AddTopLevelItem(it)
-        validBankNames[name] = "Video"
+        validBankNames[name] = Settings.MEDIA.VIDEO
     end
 
     if #videoNames > 1 then
@@ -479,7 +487,7 @@ local function refresh()
         sep.Text[0] = string.rep("─", 26)
         tree:AddTopLevelItem(sep)
         local tot = tree:NewItem()
-        tot.Text[0] = "TOTALE VIDEO"
+        tot.Text[0] = T("TOTALE VIDEO")
         tot.Text[1] = framesToHMS(totals.frames, fps)
         tot.Text[2] = tostring(totVSegs)
         tot.Text[3] = tostring(totASegs)
@@ -492,8 +500,9 @@ local function refresh()
 
     -- ── FOTOGRAFIE e GIORNALI (opzionale) ──────────────────────
     if showFoto then
-        local cats  = { "Fotografie", "Giornali" }
-        local byCat = { Fotografie={}, Giornali={} }
+        local cats  = { Settings.MEDIA.PHOTO, Settings.MEDIA.PRESS }
+        local byCat = {}
+        for _, c in ipairs(cats) do byCat[c] = {} end
         for name, d in pairs(fotoByDB) do
             local c = d.mediaType
             if byCat[c] then table.insert(byCat[c], name) end
@@ -508,7 +517,7 @@ local function refresh()
                 sep.Text[0] = string.rep("─", 26)
                 tree:AddTopLevelItem(sep)
                 local catHdr = tree:NewItem()
-                catHdr.Text[0] = cat:upper()
+                catHdr.Text[0] = string.upper(Settings.mediaLabel(cat))
                 catHdr.Font[0] = ui:Font{ PixelSize=FONT_SIZE_MAIN, Bold=true }
                 tree:AddTopLevelItem(catHdr)
 
@@ -546,7 +555,7 @@ local function refresh()
 
                 if #names > 1 then
                     local sub = tree:NewItem()
-                    sub.Text[0] = "Totale " .. cat
+                    sub.Text[0] = T("Totale ") .. cat
                     sub.Text[1] = catTotClip .. " clip"
                     sub.Text[2] = tostring(catTotVSegs)
                     sub.Text[3] = tostring(catTotASegs)
@@ -565,8 +574,7 @@ local function refresh()
     for name in pairs(validBankNames) do table.insert(allNames, name) end
     bankFlagMap = buildFlagMap(allNames)
 
-    win:Find("LblInfo").Text = string.format(
-        "%s  —  aggiornato %s", tlName or "?", os.date("%H:%M:%S"))
+    win:Find("LblInfo").Text = string.format(T("%s  —  aggiornato %s"), tlName or "?", os.date("%H:%M:%S"))
 end
 
 -- ============================================================
@@ -697,8 +705,9 @@ local function selectBankInTimeline(bankName)
 
     local flagLabel = table.concat(flags, "+")
     win:Find("LblInfo").Text = string.format(
-        "▶ %s [%s] — %d segment%s",
-        bankName, flagLabel, count, count == 1 and "o" or "i")
+        count == 1 and T("▶ %s [%s] — %d segmento")
+                   or  T("▶ %s [%s] — %d segmenti"),
+        bankName, flagLabel, count)
 end
 
 -- ============================================================

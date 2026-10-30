@@ -1,5 +1,170 @@
 # RepertoireDB — Changelog
 
+## [1.4.0] — 2026-10-30
+
+### Interfaccia in inglese, con rilevazione automatica dalla lingua di sistema
+
+Lo strumento era in italiano da sempre. Ora l'interfaccia dei tre script è
+disponibile anche in inglese, e la lingua si sceglie da un menu nel Config:
+`Automatico`, `Italiano`, `English`.
+
+**L'automatico segue la lingua del SISTEMA OPERATIVO, non quella di DaVinci
+Resolve.** Sono due impostazioni diverse: si può avere Resolve in inglese su un
+Mac in italiano, o il contrario. Quella che conta è la lingua del sistema,
+perché è quella che l'utente ha scelto per leggere. La voce del menu dice fra
+parentesi su cosa è caduta la rilevazione, così non è una scatola chiusa.
+
+Rilevata da `AppleLanguages` su macOS (l'ordine delle lingue dell'interfaccia,
+non `AppleLocale`, che è il formato di numeri e date e può essere diverso), da
+`Get-UICulture` su Windows con il registro come ripiego, dalle variabili
+`LANG`/`LC_ALL`/`LC_MESSAGES` su Linux. Su macOS le variabili d'ambiente non
+bastano: le applicazioni con interfaccia grafica non ereditano `LANG`.
+
+Una lingua di sistema che lo strumento non conosce ricade sull'italiano.
+L'interfaccia non resta mai vuota.
+
+**Tradotto anche il foglio Excel esportato**: intestazioni, note, legenda e i
+nomi dei tre fogli (`Summary` / `Segments` / `Config`). I nomi dei fogli stanno
+dentro ogni formula, quindi tradurli ha richiesto di tradurli anche là: testo e
+formule escono dalla stessa tabella nella stessa esecuzione, e il collaudo è
+che il totale del foglio inglese deve coincidere con quello dell'italiano.
+
+**Il CSV del preventivo** viene tradotto, perché è un report da leggere.
+**L'esportazione CSV del Config no**, perché è reimportabile: un file esportato
+deve rientrare nello strumento di chiunque, in qualunque lingua lo usi.
+
+**Nuovo modulo `Strings.lua`** in `Fusion/Modules/Lua/`. È **facoltativo**: se
+manca, o è di una versione più vecchia, l'interfaccia resta in italiano senza
+dare errore a schermo. L'italiano è scritto nel codice e non in quel file,
+proprio perché senza di esso non resterebbe niente da mostrare.
+
+### Corretti i plurali
+
+Erano costruiti attaccando una lettera alla parola: `"second" .. "o"/"i"`.
+Funziona in italiano e in nessun'altra lingua. Ora sono frasi complete e
+separate, una per il singolare e una per il plurale, così ogni lingua
+pluralizza a modo suo.
+
+### Separazione fra valori salvati ed etichette mostrate
+
+**Il campo `model` di ogni banca dati conteneva `"A clip"`, `"Al minuto"`: la
+stessa stringa faceva da valore salvato nel file e da etichetta mostrata a
+schermo.** Tradurre l'interfaccia così com'era avrebbe riscritto il contenuto
+dei database.
+
+Il campo `model` di ogni banca dati conteneva `"A clip"`, `"Al minuto"` e
+compagnia: la stessa stringa faceva da valore salvato nel file **e** da
+etichetta mostrata a schermo. Tradurre l'interfaccia così com'era avrebbe
+riscritto il contenuto dei database.
+
+**Decisione presa (30 ottobre 2026): il valore salvato resta la stringa
+italiana, per sempre.** Non è un residuo da correggere: è il contenuto del campo
+`model` e `mediaType` in `repertoire_db.json`, delle configurazioni in
+`memories/`, e della colonna `Model` nei CSV di importazione — che è un formato
+pubblico, documentato nel manuale e già distribuito con la 1.3.0. Cambiarlo
+avrebbe richiesto di migrare i database reali, riscrivere i template e tenere
+per sempre un lettore che accetta entrambe le forme: tre punti dove si può
+sbagliare in silenzio su dati di produzione, in cambio di un vantaggio che
+l'utente non vede mai.
+
+Quello che si traduce sono le **etichette**, in `Settings.lua`.
+
+- `Settings.lua` ora contiene, oltre alla valuta: la lingua dell'interfaccia
+  (`it`/`en`, salvata in `repertoire_settings.json`), i valori di dominio in un
+  posto solo (`MODELS`, `MEDIA_TYPES`, `DISCOUNT_TYPES`), nomi simbolici per non
+  ripetere le stringhe nel codice (`Settings.MODEL.CLIP` e simili), e le tabelle
+  delle etichette per lingua.
+- Nessun quarto modulo condiviso: la lingua è un'impostazione come la valuta, e
+  `Settings.lua` è già installato dalla 1.3.0. Un modulo nuovo avrebbe richiesto
+  di rifare installer e istruzioni il giorno dopo averli pubblicati.
+- Un valore che non è in tabella viene mostrato così com'è, e una lingua
+  sconosciuta ricade sull'italiano: in nessun caso l'interfaccia resta vuota.
+- La scrittura di `repertoire_settings.json` è ora in un punto solo. Prima
+  `Settings.save` riscriveva il file da zero con le sole chiavi della valuta:
+  aggiungendo la lingua, salvare la valuta l'avrebbe cancellata.
+
+**Config.lua** — tutti i letterali sostituiti: i menu mostrano le etichette
+nell'ordine dei valori (così l'indice scelto resta l'indice del valore da
+salvare), l'elenco banche mostra modello e tipo tradotti, la ricerca trova sia
+il valore salvato sia l'etichetta mostrata (con l'interfaccia in inglese si
+cerca "Photos" ma nel database c'è "Fotografie"), e l'importazione CSV accetta
+sia il valore canonico sia l'etichetta tradotta.
+
+**L'esportazione CSV del Config resta canonica**, perché è reimportabile: un
+file esportato deve poter rientrare nello strumento di chiunque, in qualunque
+lingua lo usi.
+
+**Calculator.lua** — sostituiti tutti e 46 i letterali. I confronti che decidono
+quale formula di prezzo si applica usano ora le costanti; le intestazioni di
+categoria, la colonna Modello nell'albero dei risultati e il CSV del preventivo
+mostrano le etichette tradotte. **Il JSON per il generatore Excel resta
+canonico**: i valori li traduce chi scrive il foglio, non chi li trasmette.
+
+Verificato rimettendo i letterali al posto delle costanti e confrontando col
+file archiviato: le differenze sono soltanto la versione, due costruzioni di
+tabella e sei punti di visualizzazione. **Nessun confronto di prezzo è
+cambiato.**
+
+**Monitor.lua** — cinque letterali sostituiti, `Settings` aggiunto fra i moduli
+caricati, intestazioni di categoria tradotte.
+
+**RepertoireDB_xlsx.py** — il generatore è in Python e deve scrivere testo
+tradotto, ma **non tiene una seconda tabella di traduzioni**: riceve le
+corrispondenze già risolte dentro il JSON, in `labels`. La stessa regola in due
+posti è quello che ha prodotto lo scarto fra foglio e motore corretto in questa
+stessa versione.
+
+Il punto delicato: i letterali dentro le formule (`VLOOKUP(...)="Al secondo"`)
+confrontano quello che è **scritto nel foglio**. Testo delle celle e letterali
+delle formule escono adesso dalla stessa tabella, nella stessa esecuzione,
+quindi sono coerenti per costruzione. Un JSON prodotto da un Calculator più
+vecchio, senza `labels`, continua a funzionare come prima.
+
+Provato generando lo stesso preventivo nelle due lingue, con tutte e tre le
+categorie e con uno sconto a soglia attivo: **totali identici** (8325 contro
+8325, e sconto 10% su 35 che dà 31,50 in entrambe), zero errori di formula al
+ricalcolo, e il foglio inglese che mostra `Per clip`, `Flat fee`, `Per second`,
+`Photos`, `NEWSPAPERS`.
+
+### Menu Lingua nel Config, con rilevazione automatica dal sistema operativo
+
+Nel Config, in alto, un menu **Lingua** accanto a quello della valuta. Tre voci:
+`Automatico — <lingua rilevata>`, `Italiano`, `English`. La voce automatica dice
+su cosa è caduta la rilevazione, così non è una scatola chiusa.
+
+**La rilevazione guarda la lingua del SISTEMA OPERATIVO, non quella di DaVinci
+Resolve.** Sono due impostazioni diverse: si può avere Resolve in inglese su un
+Mac in italiano, o il contrario. Quella che conta è la lingua del sistema,
+perché è quella che l'utente ha scelto per leggere.
+
+Come viene rilevata:
+
+| Sistema | Come |
+|---|---|
+| macOS | `AppleLanguages`, che è l'ordine delle lingue dell'**interfaccia**. Non `AppleLocale`, che è il formato di numeri e date e può essere diverso: un Mac in inglese con formati italiani è una configurazione comune |
+| Windows | `Get-UICulture` via PowerShell; se non risponde, la chiave `LocaleName` del registro |
+| Linux | `LANG`, `LC_ALL`, `LC_MESSAGES` |
+
+Su macOS le variabili d'ambiente **non** bastano: le applicazioni con interfaccia
+grafica non ereditano `LANG`, che su questa macchina risulta non impostata.
+
+Una lingua di sistema che non sappiamo tradurre, o un comando che non risponde,
+ricadono sull'italiano: in nessun caso l'interfaccia resta vuota.
+
+Cambiando lingua, i menu dei modelli, dei tipi di media e dei tipi di sconto, e
+l'elenco delle banche dati, vengono ricostruiti subito: non serve riaprire la
+finestra.
+
+**Difetto corretto durante questo lavoro**: `Settings.save` riscriveva il file
+delle impostazioni con le sole chiavi della valuta. Con l'aggiunta della lingua,
+salvare la valuta l'avrebbe cancellata e viceversa. Ora la scrittura è in un
+punto solo e il comportamento è verificato nei due versi.
+
+Da fare: le ~190 stringhe di interfaccia. **Finché non sono tradotte, scegliere
+English — o avere un sistema in inglese — produce un'interfaccia mista: etichette
+dei modelli in inglese e tutto il resto in italiano.** È lo stato atteso di una
+versione `-dev` e non va distribuito così.
+
 ## [1.3.0] — 2026-10-30
 
 ### Corretto — il foglio Excel fatturava il materiale riusato

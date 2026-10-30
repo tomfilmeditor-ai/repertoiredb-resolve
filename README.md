@@ -5,7 +5,8 @@ Reads your timeline and works out what the archive material in it will cost.
 
 🇮🇹 [Leggi in italiano](README.it.md)
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Language](https://img.shields.io/badge/interface-English%20%7C%20Italiano-blue)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -88,6 +89,10 @@ When you need the real figures, that is what the Calculator is for.
 - **Minimum billable duration** — when actual usage falls below an archive's
   minimum, the report shows the gap
 - **Audio beyond video coverage** — audio-only usage billed at 50%
+- **Language** — English or Italian, picked in `Config`, or left on
+  **Automatic**, which follows your operating system's language (not DaVinci
+  Resolve's: those are two different settings). The interface, the CSV estimate
+  and the Excel sheet all follow it
 - **Currency** — pick the symbol amounts are shown with (euro, dollar, pound,
   Swiss franc, Canadian and Australian dollar, yuan, yen, won). It changes the
   symbol only: **nothing is converted**, and no exchange rate is applied
@@ -153,10 +158,11 @@ when it is done. Then, in Resolve:
     Workspace > Scripts > Comp > RepertoireDB_Config
 
 Installing manually? The scripts in `scripts/` go in
-`Fusion/Scripts/Comp/RepertoireDB/`, and the three modules in `modules/`
-(`LogManager.lua`, `BugReportDialog.lua` and, since 1.3.0, `Settings.lua`) go in
+`Fusion/Scripts/Comp/RepertoireDB/`, and the four modules in `modules/` go in
 `Fusion/Modules/Lua/` — **two different folders**. The scripts will not start if
-the modules are in the wrong place.
+`LogManager.lua`, `BugReportDialog.lua` or `Settings.lua` are in the wrong
+place. `Strings.lua`, which holds the English translation, is the one exception:
+without it the interface simply stays in Italian.
 
 ---
 
@@ -165,14 +171,12 @@ the modules are in the wrong place.
 - **DaVinci Resolve Studio 19 or 20.** The free version will not work: since
   Resolve 19.1 the scripting interface these tools are built on (UIManager) is
   Studio-only.
-- **The interface is in Italian.** This README is not: the tool was written for
-  the author's own documentaries and never translated. The terms you need are
-  few and the layout is self-explanatory, but you should know before you
-  download. See [issue on multi-language support](../../issues).
-  Amounts are no longer euro-only: since 1.3.0 you can pick the currency symbol
-  in `Config`, and it applies to the interface, the CSV and the Excel sheet.
-  It is a symbol, not a conversion — enter your rates in the currency you
-  actually license in.
+- **English and Italian.** Since 1.4.0 the interface, the CSV estimate and the
+  exported Excel sheet are available in English. On first run the language
+  follows your operating system; you can also set it explicitly in `Config`.
+  Amounts are not euro-only either: pick the currency symbol in `Config`. It is
+  a symbol, not a conversion — enter your rates in the currency you actually
+  license in.
 - macOS or Windows
 - For Excel export only: Python 3 with `openpyxl` (there is a helper script,
   `RepertoireDB_Installer.lua`, that sets this up)
@@ -197,6 +201,14 @@ the modules are in the wrong place.
 - **One currency at a time.** The currency setting is a symbol for the whole
   database. If you license from archives in different currencies in the same
   project, convert the rates yourself before entering them
+- **The values stored in your configuration file stay in Italian** — `A clip`,
+  `Al minuto`, `Video`, `Fotografie`. This is deliberate, not an oversight:
+  those words are the key the tool uses to find each archive's pricing model,
+  and they are also the format of the `Model` column in the import CSVs. Keeping
+  them means a database built in English opens in Italian and the other way
+  round. You see the translated label on screen; the file keeps the key.
+  The Config sheet's own CSV export keeps them too, because it is meant to be
+  re-imported — including into someone else's copy, in whatever language
 - The tool reads what is in the timeline. It cannot know about contractual
   terms you have not entered into the archive database
 
