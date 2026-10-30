@@ -42,6 +42,16 @@ def _fill(hex_color):
 def _font(bold=False, size=10, color="000000", name="Arial"):
     return Font(bold=bold, size=size, color=color, name=name)
 
+def money_fmt(symbol):
+    """Formato numerico Excel con il simbolo della valuta davanti.
+
+    Il simbolo sta nel formato e non nel valore: la cella resta un numero,
+    le formule continuano a funzionare e il foglio non si rompe.
+    """
+    s = (symbol or "\u20ac").replace('"', "")
+    return '"%s"#,##0.00' % s
+
+
 def _a(cell, value=None, fill=None, font=None, align=None, num_fmt=None, vborder=False):
     if value is not None:
         cell.value = value
@@ -76,7 +86,7 @@ def fmt_eur(val):
 #   A  Nome Banca
 #   B  Tipo
 #   C  Modello
-#   D  Tariffa €
+#   D  Tariffa (valuta scelta)
 #   E  Blocco (sec)
 #   F  Utilizzo Min. (sec)  ← se > 0, costo calcolato su MAX(dur_effettiva, F)
 #   G  Note
@@ -103,6 +113,8 @@ _DISC_HEADERS = [
 
 def write_config(ws, data):
     fps        = data.get("fps", 25)
+    cur        = data.get("currencySymbol", "\u20ac")
+    MF         = money_fmt(cur)
     db_entries = as_dict(data.get("dbEntryByName", {}))
 
     # F=Util.Min.(sec), G=Note, H-Q=soglie/sconti × 5
@@ -125,7 +137,7 @@ def write_config(ws, data):
     ws["C1"].font = _font(color="888888", size=9)
 
     # Riga 2 — intestazioni (A-G base + H-Q soglie × 5)
-    base_hdrs = ["Nome Banca", "Tipo", "Modello", "Tariffa €",
+    base_hdrs = ["Nome Banca", "Tipo", "Modello", "Tariffa " + cur,
                  "Blocco (sec)", "Utilizzo\nMin. (sec)", "Note"]
     for c, h in enumerate(base_hdrs + _DISC_HEADERS, 1):
         cell = ws.cell(2, c)
@@ -151,7 +163,7 @@ def write_config(ws, data):
             cell = ws.cell(r, c)
             _a(cell, v, fill=row_fill, vborder=True)
             if c == 4:
-                cell.number_format = '#,##0.00'
+                cell.number_format = MF
             if c == 6:
                 cell.number_format = '#,##0'
 
@@ -200,10 +212,23 @@ _Q  = '=IFERROR(VALUE(LEFT(H{r},2))*3600*Config!$B$1+VALUE(MID(H{r},4,2))*60*Con
 _R  = '=IFERROR(VALUE(LEFT(I{r},2))*3600*Config!$B$1+VALUE(MID(I{r},4,2))*60*Config!$B$1+VALUE(MID(I{r},7,2))*Config!$B$1+VALUE(RIGHT(I{r},2)),0)'
 
 
-def _write_seg_row(ws, r, row, seg, row_fill):
+def _write_seg_row(ws, r, row, seg, row_fill, MF, seg_idx=0):
     dup      = seg.get("dupStatus", "nuovo")
     is_dedup = dup in ("duplicato", "parziale")
     fill     = _fill(C_DEDUP) if is_dedup else row_fill
+
+    # Un segmento "si paga" secondo il modello della banca:
+    #  - "A clip": si paga la clip sorgente, una volta sola. Le comparse
+    #    successive della stessa clip in timeline non si contano.
+    #  - modelli a tempo: si pagano i fotogrammi non già conteggiati, quindi
+    #    un segmento interamente ripetuto non vale, uno ripetuto in parte
+    #    vale per la sua parte nuova (ci pensa frUnici, qui sotto).
+    # Il valore viene dal campo strutturato che il motore trasmette, non dal
+    # testo della nota: le diciture sono più di una e cambiano nel tempo.
+    if row.get("model", "") == "A clip":
+        billable = 1 if seg_idx == 0 else 0
+    else:
+        billable = 0 if dup == "duplicato" else 1
 
     static = {
         1: row.get("mediaName", ""),
@@ -223,7 +248,7 @@ def _write_seg_row(ws, r, row, seg, row_fill):
     _a(ws.cell(r, 10), _TC_J.format(r=r), fill=fill, vborder=True)
 
     if is_dedup:
-        _a(ws.cell(r, 11), 0, fill=fill, vborder=True, num_fmt='#,##0.00')
+        _a(ws.cell(r, 11), 0, fill=fill, vborder=True, num_fmt=MF)
     else:
         _a(ws.cell(r, 11), _K_FORMULA.format(r=r), fill=fill, vborder=True)
 
@@ -237,6 +262,22 @@ def _write_seg_row(ws, r, row, seg, row_fill):
     ws.cell(r, 18).value = _R.format(r=r)
     ws.cell(r, 19).value = f'=MAX(R{r}-Q{r},0)'
 
+    # Helper T–U (nascoste): le due quantità che il motore ha già misurato
+    # sulla timeline e che il foglio non deve ricavarsi da solo.
+    #   T = fotogrammi non già conteggiati (P tiene invece il totale del
+    #       segmento, che resta giusto come durata della singola clip)
+    #   U = 1 se il segmento si paga, 0 se è una ripetizione
+    # Le righe di struttura (separatori, sottototali) non scrivono nulla qui:
+    # così non vengono contate né fra quelle da pagare né fra i duplicati.
+    # Se frUnici manca, il Calculator è più vecchio di questo generatore
+    # (installazione a mano fatta a metà). In quel caso si torna al totale del
+    # segmento, cioè al comportamento precedente: sovraconta i riusi, ma è uno
+    # stato noto. Mettere zero darebbe durate nulle e costi stravolti in silenzio.
+    fr_unici = seg.get("frUnici")
+    ws.cell(r, 20).value = (int(fr_unici) if isinstance(fr_unici, (int, float))
+                            else f'=MAX(O{r}-N{r},0)')
+    ws.cell(r, 21).value = billable
+
 
 def _write_sub_row(ws, r, label, bank):
     _a(ws.cell(r, 1), f"  → {label}", fill=_fill(C_SEG_SUB), font=_font(bold=True, size=9))
@@ -246,6 +287,8 @@ def _write_sub_row(ws, r, label, bank):
 
 
 def write_segmenti(ws, data):
+    cur = data.get("currencySymbol", "\u20ac")
+    MF  = money_fmt(cur)
     rows      = data.get("rows", [])
     excess    = as_dict(data.get("excessByDB", {}))
     sort_bank = data.get("sortByBank", False)
@@ -253,17 +296,18 @@ def write_segmenti(ws, data):
     vis_hdrs = ["File", "Tipo", "Banca Dati", "Modello",
                 "Src In", "Src Out", "Durata Sorgente",
                 "Rec TC In", "Rec TC Out", "Durata Montato",
-                "Costo Segmento €", "Note", "Audio Eccedente"]
+                "Costo Segmento " + cur, "Note", "Audio Eccedente"]
     for c, h in enumerate(vis_hdrs, 1):
         _a(ws.cell(1, c), h, fill=_fill(C_HEADER),
            font=_font(bold=True, color=C_WHITE),
            align=Alignment(horizontal="center", wrap_text=True))
 
-    help_hdrs = ["_SrcIn_fr", "_SrcOut_fr", "_DurSrc_fr", "_RecIn_fr", "_RecOut_fr", "_DurMon_fr"]
+    help_hdrs = ["_SrcIn_fr", "_SrcOut_fr", "_DurSrc_fr", "_RecIn_fr", "_RecOut_fr", "_DurMon_fr",
+                 "_FrUnici", "_Fatturabile"]
     for c, h in enumerate(help_hdrs, 14):
         _a(ws.cell(1, c), h, fill=_fill(C_HELP), font=_font(size=8, color="666666"))
 
-    for col in ["N","O","P","Q","R","S"]:
+    for col in ["N","O","P","Q","R","S","T","U"]:
         ws.column_dimensions[col].hidden = True
         ws.column_dimensions[col].width  = 10
 
@@ -289,9 +333,9 @@ def write_segmenti(ws, data):
 
             row_idx = 0
             for row in bank_rows:
-                for seg in row.get("segments", []):
+                for seg_idx, seg in enumerate(row.get("segments", [])):
                     fill = _fill(C_ALT) if row_idx % 2 == 1 else _fill(C_WHITE)
-                    _write_seg_row(ws, r, row, seg, fill)
+                    _write_seg_row(ws, r, row, seg, fill, MF, seg_idx)
                     row_idx += 1
                     r += 1
 
@@ -311,9 +355,9 @@ def write_segmenti(ws, data):
                 _write_sub_row(ws, r, f"Subtotale: {row.get('mediaName', '')}", db_name)
                 r += 1
 
-            for seg in segs:
+            for seg_idx, seg in enumerate(segs):
                 fill = _fill(C_ALT) if row_idx % 2 == 1 else _fill(C_WHITE)
-                _write_seg_row(ws, r, row, seg, fill)
+                _write_seg_row(ws, r, row, seg, fill, MF, seg_idx)
                 row_idx += 1
                 r += 1
 
@@ -344,7 +388,8 @@ _B_FORMULA = (
     '/IFERROR(VLOOKUP(A{r},Config!$A$3:$G$202,5,0),30),1)'
     '*VLOOKUP(A{r},Config!$A$3:$G$202,4,0),'
     'IF(VLOOKUP(A{r},Config!$A$3:$G$202,3,0)="A clip",'
-    'COUNTIF(Segmenti!$C$2:$C$5000,A{r})*VLOOKUP(A{r},Config!$A$3:$G$202,4,0),'
+    'COUNTIFS(Segmenti!$C$2:$C$5000,A{r},Segmenti!$U$2:$U$5000,1)'
+    '*VLOOKUP(A{r},Config!$A$3:$G$202,4,0),'
     'IF(VLOOKUP(A{r},Config!$A$3:$G$202,3,0)="Forfait",'
     'VLOOKUP(A{r},Config!$A$3:$G$202,4,0),'
     '"?")))))),  '
@@ -358,8 +403,17 @@ _F_FORMULA = (
     '&TEXT(MOD(G{r},Config!$B$1),"00"),"")'
 )
 
-_G_VIDEO = '=SUMPRODUCT((Segmenti!$C$2:$C$5000=A{r})*(Segmenti!$B$2:$B$5000="Video")*Segmenti!$P$2:$P$5000)'
-_G_NONTV = '=SUMPRODUCT((Segmenti!$C$2:$C$5000=A{r})*Segmenti!$P$2:$P$5000)'
+# Durata della banca: somma i fotogrammi NON già conteggiati (colonna T), non
+# quelli totali del segmento (colonna P). Sommando P, un'inquadratura riusata
+# tre volte veniva misurata tre volte, e il foglio fatturava più del motore.
+_G_VIDEO = '=SUMPRODUCT((Segmenti!$C$2:$C$5000=A{r})*(Segmenti!$B$2:$B$5000="Video")*Segmenti!$T$2:$T$5000)'
+_G_NONTV = '=SUMPRODUCT((Segmenti!$C$2:$C$5000=A{r})*Segmenti!$T$2:$T$5000)'
+
+# Conteggio clip per il modello "A clip": conta solo i segmenti da pagare
+# (colonna U = 1). Esclude per costruzione sia le comparse successive della
+# stessa clip sorgente sia le righe di struttura, che in U non scrivono nulla.
+_CONTA_CLIP = 'COUNTIFS(Segmenti!$C$2:$C$5000,A{r},Segmenti!$U$2:$U$5000,1)'
+_CONTA_DUPL = '=COUNTIFS(Segmenti!$C$2:$C$5000,A{r},Segmenti!$U$2:$U$5000,0)'
 
 # Formula sconto automatico da soglie Config.
 #
@@ -398,21 +452,24 @@ def _E_formula(r):
     )
 
 
-def _write_section(ws, cat, bank_names, r_start, db_entries, db_uncovered, db_total_sec):
+def _write_section(ws, cat, bank_names, r_start, db_entries, db_uncovered, db_total_sec, cur, MF):
     r = r_start
     cat_label = {"Video": "VIDEO", "Fotografie": "FOTOGRAFIE", "Giornali": "GIORNALI"}[cat]
 
     # Header categoria
-    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=8)
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=10)
     _a(ws.cell(r, 1), cat_label,
        fill=_fill(C_HEADER), font=_font(bold=True, size=11, color=C_WHITE))
-    for c in range(2, 9):
+    for c in range(2, 11):
         ws.cell(r, c).fill = _fill(C_HEADER)
     r += 1
 
-    # Header colonne
-    hdrs = ["Banca Dati", "Costo Lordo €", "Occorrenze", "Sconto %",
-            "Costo Netto €", "Durata totale", "Secondi Scoperti", "Note"]
+    # Header colonne — dieci, quante sono le colonne scritte sotto.
+    # La settima resta senza titolo: contiene la somma dei frame, che serve
+    # alle formule delle altre colonne e non si legge come dato.
+    hdrs = ["Banca Dati", "Costo Lordo " + cur, "Occorrenze", "Sconto %",
+            "Costo Netto " + cur, "Durata totale", "", "Secondi Scoperti",
+            "Riusate", "Note"]
     for c, h in enumerate(hdrs, 1):
         _a(ws.cell(r, c), h,
            fill=_fill(C_HEADER), font=_font(bold=True, size=9, color=C_WHITE),
@@ -426,27 +483,38 @@ def _write_section(ws, cat, bank_names, r_start, db_entries, db_uncovered, db_to
 
         _a(ws.cell(r, 1), name, fill=row_fill, vborder=True)
         _a(ws.cell(r, 2), _B_FORMULA.format(r=r).strip(),
-           fill=row_fill, vborder=True, num_fmt='#,##0.00')
-        _a(ws.cell(r, 3), f'=COUNTIF(Segmenti!$C$2:$C$5000,A{r})',
+           fill=row_fill, vborder=True, num_fmt=MF)
+        _a(ws.cell(r, 3), '=' + _CONTA_CLIP.format(r=r),
            fill=row_fill, vborder=True, num_fmt='0')
         _a(ws.cell(r, 4), _D_formula(r), fill=row_fill, vborder=True,
            num_fmt='0.00')
         _a(ws.cell(r, 5), _E_formula(r),
-           fill=row_fill, vborder=True, num_fmt='#,##0.00')
+           fill=row_fill, vborder=True, num_fmt=MF)
         _a(ws.cell(r, 6), _F_FORMULA.format(r=r), fill=row_fill, vborder=True)
         g = _G_VIDEO.format(r=r) if cat == "Video" else _G_NONTV.format(r=r)
         _a(ws.cell(r, 7), g, fill=row_fill, vborder=True)
-        # Colonna "Secondi Scoperti" — mostra deficit se utilizzo < minimo
+        # Colonna "Secondi Scoperti" — mostra deficit se utilizzo < minimo.
+        # I secondi usati e quelli scoperti devono sommare al minimo: chi legge
+        # fa la sottrazione. Arrotondandoli separatamente non tornava
+        # (16,28 e 13,72 diventavano 16 e 13, somma 29 su un minimo di 30),
+        # quindi si arrotonda il primo e il secondo si ricava per differenza.
         uncovered_text = ""
         entry = db_entries.get(name)
         if entry and entry.get("utilMin") and entry.get("utilMin") > 0:
             uncov = db_uncovered.get(name)
             total = db_total_sec.get(name, 0)
             if uncov and uncov > 0:
-                uncovered_text = f"Min {entry['utilMin']}s - Usati {int(total)}s - Scoperti {int(uncov)}s"
+                util  = int(entry["utilMin"])
+                usati = int(round(total))
+                usati = max(0, min(usati, util))
+                uncovered_text = (f"Min {util}s - Usati {usati}s "
+                                  f"- Scoperti {util - usati}s")
         _a(ws.cell(r, 8), uncovered_text, fill=row_fill, vborder=True,
            font=_font(size=9, color="B03020"))
-        _a(ws.cell(r, 9), fill=row_fill, vborder=True)
+        # "Riusate": quante comparse non si pagano perché già conteggiate
+        _a(ws.cell(r, 9), _CONTA_DUPL.format(r=r), fill=row_fill, vborder=True,
+           num_fmt='0;;"-"')
+        _a(ws.cell(r, 10), fill=row_fill, vborder=True)
         r += 1
 
     # Subtotale
@@ -454,12 +522,16 @@ def _write_section(ws, cat, bank_names, r_start, db_entries, db_uncovered, db_to
     sub_e = "+".join(f'IF(E{br}="DA DEFINIRE",0,E{br})' for br in bank_rows) if bank_rows else "0"
     sub_g = "+".join(f'G{br}' for br in bank_rows) if bank_rows else "0"
 
-    for c in range(1, 10):
+    sub_i = "+".join(f'I{br}' for br in bank_rows) if bank_rows else "0"
+
+    for c in range(1, 11):
         ws.cell(r_sub, c).fill = _fill(C_SUB_RP)
     _a(ws.cell(r_sub, 1), f"SUBTOTALE {cat_label}",
        fill=_fill(C_SUB_RP), font=_font(bold=True))
+    _a(ws.cell(r_sub, 9), f"={sub_i}",
+       fill=_fill(C_SUB_RP), font=_font(bold=True), num_fmt='0;;"-"')
     _a(ws.cell(r_sub, 5), f"={sub_e}",
-       fill=_fill(C_SUB_RP), font=_font(bold=True), num_fmt='#,##0.00')
+       fill=_fill(C_SUB_RP), font=_font(bold=True), num_fmt=MF)
     _a(ws.cell(r_sub, 6), _F_FORMULA.format(r=r_sub),
        fill=_fill(C_SUB_RP), font=_font(bold=True))
     _a(ws.cell(r_sub, 7), f"={sub_g}", fill=_fill(C_SUB_RP), font=_font(bold=True))
@@ -468,6 +540,8 @@ def _write_section(ws, cat, bank_names, r_start, db_entries, db_uncovered, db_to
 
 
 def write_riepilogo(ws, data):
+    cur = data.get("currencySymbol", "\u20ac")
+    MF  = money_fmt(cur)
     db_entries      = as_dict(data.get("dbEntryByName", {}))
     by_db           = as_dict(data.get("byDB", {}))
     db_uncovered    = as_dict(data.get("dbUncoveredSec", {}))
@@ -484,12 +558,12 @@ def write_riepilogo(ws, data):
         by_cat.get(mt, by_cat["Video"]).append(name)
 
     # Intestazione semplice
-    ws.merge_cells("A1:H1")
+    ws.merge_cells("A1:J1")
     _a(ws.cell(1, 1), f"RepertoireDB {version} — Riepilogo costi repertorio",
        font=_font(bold=True, size=14))
-    ws.merge_cells("A2:H2")
+    ws.merge_cells("A2:J2")
     _a(ws.cell(2, 1), f"Timeline: {tl_name}", font=_font(size=11))
-    ws.merge_cells("A3:H3")
+    ws.merge_cells("A3:J3")
     _a(ws.cell(3, 1), f"Generato: {generated}", font=_font(size=9, color="888888"))
 
     r = 5
@@ -498,7 +572,7 @@ def write_riepilogo(ws, data):
         names = by_cat.get(cat, [])
         if not names:
             continue
-        r, r_sub = _write_section(ws, cat, names, r, db_entries, db_uncovered, db_total_sec)
+        r, r_sub = _write_section(ws, cat, names, r, db_entries, db_uncovered, db_total_sec, cur, MF)
         subtot_rows[cat] = r_sub
 
     r_tot  = r
@@ -507,29 +581,36 @@ def write_riepilogo(ws, data):
         for c in cats if c in subtot_rows
     ) or "0"
     subs_g = "+".join(f'G{subtot_rows[c]}' for c in cats if c in subtot_rows) or "0"
+    subs_i = "+".join(f'I{subtot_rows[c]}' for c in cats if c in subtot_rows) or "0"
 
-    for c in range(1, 10):
+    for c in range(1, 11):
         ws.cell(r_tot, c).fill = _fill(C_TOT)
     _a(ws.cell(r_tot, 1), "TOTALE GENERALE",
        fill=_fill(C_TOT), font=_font(bold=True, size=12, color=C_WHITE))
     _a(ws.cell(r_tot, 5), f"={subs_e}",
        fill=_fill(C_TOT), font=_font(bold=True, size=12, color=C_WHITE),
-       num_fmt='#,##0.00')
+       num_fmt=MF)
     _a(ws.cell(r_tot, 6), _F_FORMULA.format(r=r_tot),
        fill=_fill(C_TOT), font=_font(bold=True, color=C_WHITE))
     _a(ws.cell(r_tot, 7), f"={subs_g}",
        fill=_fill(C_TOT), font=_font(bold=True, color=C_WHITE))
+    _a(ws.cell(r_tot, 9), f"={subs_i}",
+       fill=_fill(C_TOT), font=_font(bold=True, color=C_WHITE), num_fmt='0;;"-"')
 
     r_leg = r_tot + 2
-    ws.merge_cells(start_row=r_leg, start_column=1, end_row=r_leg, end_column=8)
+    ws.merge_cells(start_row=r_leg, start_column=1, end_row=r_leg, end_column=10)
     ws.cell(r_leg, 1).value = (
         "Legenda:  D=Sconto % auto (soglie in Config H-Q: minuti per modelli temporali, clip per 'A clip') "
         "— sovrascrivibile manualmente  | F=Utilizzo Min.(sec): se > 0 il costo usa MAX(durata_reale, F)  "
-        "| 🟠 Clip deduplicata (costo statico)"
+        "| C=Occorrenze: solo le clip che si pagano  "
+        "| I=Riusate: comparse non fatturate perché il materiale era già conteggiato "
+        "(una ripetuta in parte resta fatturata per la sua parte nuova e non compare qui)  "
+        "| 🟠 nel foglio Segmenti = materiale già conteggiato"
     )
     ws.cell(r_leg, 1).font = _font(size=8, color="888888")
 
-    for col, w in [("A",34),("B",14),("C",12),("D",10),("E",14),("F",14),("G",16),("H",28),("I",36)]:
+    for col, w in [("A",34),("B",14),("C",12),("D",10),("E",14),("F",14),("G",16),("H",28),
+                   ("I",10),("J",36)]:
         ws.column_dimensions[col].width = w
 
 

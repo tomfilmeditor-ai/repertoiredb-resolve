@@ -17,12 +17,16 @@
 
 local json = require("dkjson")
 
-local VERSION = "1.2.14"
+local VERSION = "1.3.0"
 
 local LogManager = require("LogManager")
 LogManager:init()
 
 local BugReportDialog = require("BugReportDialog")
+
+-- Settings: valuta scelta dall'utente (solo il simbolo, nessuna conversione)
+local Settings = require("Settings")
+local CUR = Settings.cur()
 
 -- Rileva la versione di DaVinci Resolve in modo difensivo
 local function getResolveVersion()
@@ -564,6 +568,12 @@ local function buildWindow(db)
                     Font = ui:Font{ PixelSize = 20 },
                     StyleSheet = "color: #DCDCDC;" },
                 ui:HGap{},
+                ui:Label{ Text = "Valuta:", MinimumSize={55,22},
+                    Alignment = { AlignRight = true, AlignVCenter = true },
+                    StyleSheet = "color: #B4B4B4;" },
+                ui:ComboBox{ ID="CurrencyCombo", MinimumSize={210,26},
+                    ToolTip="Cambia solo il simbolo mostrato. Gli importi non vengono convertiti." },
+                ui:HGap{10},
                 ui:VGroup{
                     ui:Label{ Text = "© Tommaso Feraboli Film Editor",
                         Alignment = { AlignRight = true },
@@ -629,7 +639,7 @@ local function buildWindow(db)
                 ui:HGap{},
             },
             ui:HGroup{
-                ui:Label{ Text="Tariffa (€):", MinimumSize={140,20} },
+                ui:Label{ Text="Tariffa (" .. CUR .. "):", MinimumSize={140,20} },
                 ui:LineEdit{ ID="FieldRate", PlaceholderText="es. 5300.00", MinimumSize={120,24} },
                 ui:Label{ Text="(per unità del modello scelto)   " },
                 ui:CheckBox{ ID="ChkNoRate", Text="Tariffa da definire", Checked=false },
@@ -729,6 +739,13 @@ local function buildWindow(db)
     local comboType = win:Find("FieldType")
     for _, t in ipairs(MEDIA_TYPES) do comboType:AddItem(t) end
 
+    -- Valuta: solo il simbolo mostrato, nessuna conversione degli importi
+    local comboCur = win:Find("CurrencyCombo")
+    for _, c in ipairs(Settings.CURRENCIES) do comboCur:AddItem(c.label) end
+    for i, c in ipairs(Settings.CURRENCIES) do
+        if c.code == Settings.code() then comboCur.CurrentIndex = i - 1 break end
+    end
+
     -- Lista corrente del ComboBox FieldModel (varia per tipo media)
     local currentModelList = MODELS
 
@@ -803,7 +820,7 @@ local function buildWindow(db)
         hdr.Text[2] = "Modello"
         hdr.Text[3] = "Blocco"
         hdr.Text[4] = "Util.Min."
-        hdr.Text[5] = "Tariffa €"
+        hdr.Text[5] = "Tariffa " .. CUR
         hdr.Text[6] = "Sconti"
         hdr.Text[7] = "Audio Ecc."
         tree:SetHeaderItem(hdr)
@@ -988,6 +1005,50 @@ local function buildWindow(db)
             setFormReadOnly(false)
             win:Find("LblStatus").Text = "Modifica abilitata — premi Salva per confermare."
         end
+    end
+
+    -- Cambio valuta: salva la scelta e avvisa che non è una conversione.
+    -- Senza quell'avviso, il primo che cambia valuta pensa a un errore di calcolo.
+    win.On.CurrencyCombo.CurrentIndexChanged = function(ev)
+        local sel = Settings.CURRENCIES[win:Find("CurrencyCombo").CurrentIndex + 1]
+        if not sel then return end
+        if sel.code == Settings.code() then return end   -- nessun cambio reale
+
+        local ok, err = Settings.save(sel.symbol, sel.code)
+        if not ok then
+            LogManager:error("Config.lua", "Salvataggio valuta fallito: " .. tostring(err))
+            win:Find("LblStatus").Text = "⚠ " .. tostring(err)
+            return
+        end
+        Settings.reload()
+        CUR = Settings.cur()
+        LogManager:info("Config.lua", "Valuta impostata: " .. sel.code .. " (" .. sel.symbol .. ")")
+
+        local msg = disp:AddWindow({
+            ID = "CurNotice",
+            WindowTitle = "Valuta cambiata",
+            Geometry = { 420, 300, 460, 190 },
+            ui:VGroup{
+                ui:Label{ Text = "Valuta impostata: " .. sel.label,
+                    Font = ui:Font{ PixelSize = 14, Bold = true } },
+                ui:Label{ WordWrap = true, Text =
+                    "Cambia solo il simbolo mostrato accanto agli importi. "
+                    .. "Le cifre che hai inserito NON vengono convertite: "
+                    .. "restano i numeri che hai scritto tu." },
+                ui:Label{ WordWrap = true,
+                    Font = ui:Font{ Italic = true },
+                    StyleSheet = "color: #B4B4B4;",
+                    Text = "Le finestre già aperte (Calculator, Monitor) "
+                    .. "mostrano il simbolo nuovo dopo essere state riaperte." },
+                ui:HGroup{ ui:HGap{},
+                    ui:Button{ ID = "BtnCurOk", Text = "Ho capito", MinimumSize = {110,30} } },
+            },
+        })
+        msg.On.BtnCurOk.Clicked = function() disp:ExitLoop() end
+        msg.On.CurNotice.Close  = function() disp:ExitLoop() end
+        msg:Show(); disp:RunLoop(); msg:Hide()
+
+        refreshTree()
     end
 
     win.On.BtnSearch.Clicked = function(ev)
@@ -1323,7 +1384,7 @@ local function buildWindow(db)
         f:write("# RepertoireDB v" .. VERSION .. " — Esportazione Archivi\n")
         f:write("# Generato: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n")
         -- Intestazione colonne (ignorata dall'import come prima riga non-commento)
-        f:write("Nome,Modello,Tariffa (EUR),Durata Blocco (sec),Tipo,Audio Eccedente,Soglia1,Sconto1%,TipoSconto1,...\n")
+        f:write("Nome,Modello,Tariffa (" .. Settings.code() .. "),Durata Blocco (sec),Tipo,Audio Eccedente,Soglia1,Sconto1%,TipoSconto1,...\n")
 
         for _, e in ipairs(db) do
             local rateStr  = e.rate and string.format("%.4f", e.rate) or ""

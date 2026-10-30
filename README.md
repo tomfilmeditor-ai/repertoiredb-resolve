@@ -5,7 +5,7 @@ Reads your timeline and works out what the archive material in it will cost.
 
 🇮🇹 [Leggi in italiano](README.it.md)
 
-![Version](https://img.shields.io/badge/version-1.2.13-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -88,6 +88,9 @@ When you need the real figures, that is what the Calculator is for.
 - **Minimum billable duration** — when actual usage falls below an archive's
   minimum, the report shows the gap
 - **Audio beyond video coverage** — audio-only usage billed at 50%
+- **Currency** — pick the symbol amounts are shown with (euro, dollar, pound,
+  Swiss franc, Canadian and Australian dollar, yuan, yen, won). It changes the
+  symbol only: **nothing is converted**, and no exchange rate is applied
 - **Export** — a full report to CSV or Excel (`.xlsx`)
 
 **The Excel file is not a snapshot of the numbers: it is a spreadsheet that
@@ -99,6 +102,27 @@ run the script again.
 
 Useful when the cut is locked but the negotiation is not: try two different
 rates in front of the producer and see straight away where the estimate lands.
+
+### What recalculates in the sheet, and what does not
+
+Not everything in the sheet is a formula, and the difference matters.
+
+| | |
+|---|---|
+| **Recalculates** | rates, discount percentages and their thresholds, minimum billable duration, block length — the commercial terms, the numbers you negotiate over |
+| **Does not recalculate** | the billable source durations, and which occurrences are repeats of material already paid for — these are measurements taken by reading the cut |
+
+This is a real limit of a spreadsheet, not a shortcut. To know whether the same
+source frames appear twice in the cut you have to compare the ranges of every
+clip of that archive against each other, partial overlaps included. A formula
+can add up; it cannot recognise. So those values arrive from the Calculator as
+established facts, written into cells the sheet does not recompute.
+
+**What this means in practice:** editing a segment's timecodes by hand in the
+`Segmenti` sheet does **not** change the cost, and deleting or adding segment
+rows does not produce a consistent count. When the cut changes, run the
+Calculator again and re-export. The sheet is for negotiating rates, not for
+correcting the cut.
 
 > **The figures are indicative.** The report is a working estimate, not the
 > production's official costing. Contractual terms vary and always take
@@ -129,7 +153,8 @@ when it is done. Then, in Resolve:
     Workspace > Scripts > Comp > RepertoireDB_Config
 
 Installing manually? The scripts in `scripts/` go in
-`Fusion/Scripts/Comp/RepertoireDB/`, and the two modules in `modules/` go in
+`Fusion/Scripts/Comp/RepertoireDB/`, and the three modules in `modules/`
+(`LogManager.lua`, `BugReportDialog.lua` and, since 1.3.0, `Settings.lua`) go in
 `Fusion/Modules/Lua/` — **two different folders**. The scripts will not start if
 the modules are in the wrong place.
 
@@ -143,8 +168,11 @@ the modules are in the wrong place.
 - **The interface is in Italian.** This README is not: the tool was written for
   the author's own documentaries and never translated. The terms you need are
   few and the layout is self-explanatory, but you should know before you
-  download. Costs are shown in euros. See
-  [issue on multi-language support](../../issues).
+  download. See [issue on multi-language support](../../issues).
+  Amounts are no longer euro-only: since 1.3.0 you can pick the currency symbol
+  in `Config`, and it applies to the interface, the CSV and the Excel sheet.
+  It is a symbol, not a conversion — enter your rates in the currency you
+  actually license in.
 - macOS or Windows
 - For Excel export only: Python 3 with `openpyxl` (there is a helper script,
   `RepertoireDB_Installer.lua`, that sets this up)
@@ -161,6 +189,14 @@ the modules are in the wrong place.
   results
 - **Windows**: the code is cross-platform and the installer is built for both,
   but day-to-day use is tested on macOS
+- **The exported Excel sheet cannot recognise repeated material on its own** —
+  it receives that information from the Calculator. Edits to the `Segmenti`
+  sheet that would change which material is billable are therefore not
+  reflected in the totals. See *What recalculates in the sheet, and what does
+  not* above
+- **One currency at a time.** The currency setting is a symbol for the whole
+  database. If you license from archives in different currencies in the same
+  project, convert the rates yourself before entering them
 - The tool reads what is in the timeline. It cannot know about contractual
   terms you have not entered into the archive database
 

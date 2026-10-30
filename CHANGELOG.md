@@ -1,5 +1,107 @@
 # RepertoireDB — Changelog
 
+## [1.3.0] — 2026-10-30
+
+### Corretto — il foglio Excel fatturava il materiale riusato
+
+**Il difetto più importante di questa versione, presente in tutte le precedenti.**
+
+Il foglio Excel ricontava le clip e le durate con formule proprie, e non sapeva
+riconoscere il materiale già conteggiato. Risultato: se gli stessi fotogrammi
+sorgente comparivano più volte nel montaggio, il foglio li fatturava più volte,
+mentre il Calculator li fattura una sola. Su una timeline reale il foglio dava
+**64530** dove il motore dava **64460**; su una banca a modello "A clip" contava
+**42 clip invece di 6**, e lì il danno era invisibile solo perché la tariffa era
+ancora da compilare. **Il CSV non era toccato**: porta i numeri del motore.
+
+Tre cause distinte, tutte chiuse:
+
+- Le durate sommavano la durata **totale** di ogni segmento invece dei
+  fotogrammi non già conteggiati. Il Calculator quel dato lo calcolava ma non lo
+  trasmetteva: ora sì.
+- Il conteggio delle clip includeva le comparse successive della stessa clip
+  sorgente, che per il modello "A clip" si paga una volta.
+- La riga di sottototale per banca veniva contata come se fosse una clip, perché
+  porta il nome della banca nella colonna su cui il conteggio lavorava.
+
+Il criterio applicato, nelle parole dell'autore: **a clip si paga una volta per
+clip sorgente; a forfait una volta per banca, incluse tutte le sue clip; i
+duplicati si mostrano ma non si contano mai, salvo il primo uso.**
+
+Un segmento ripetuto solo **in parte** resta fatturato per la sua parte nuova, e
+non viene contato fra le riusate.
+
+### Aggiunto — colonna "Riusate" nel Riepilogo
+
+Dice, per ogni banca, quante comparse non vengono fatturate perché il materiale
+era già conteggiato. Con subtotale per categoria e totale generale. Serve a
+vedere insieme le due cose che prima si potevano solo dedurre: quanto paghi e
+quanto hai riusato.
+
+### Modificato — il pulsante di esportazione dice cosa fa
+
+Da `Esporta CSV` a **`Esporta CSV / XLSX`**. Il pulsante apre un dialogo che
+offre entrambi i formati: il nome vecchio ne nascondeva metà.
+
+### Da sapere — cosa si ricalcola nel foglio e cosa no
+
+Il foglio Excel resta un foglio di calcolo vivo, ma non tutto quello che
+contiene si ricalcola, e la distinzione ora è dichiarata nel manuale.
+
+| | |
+|---|---|
+| **Si ricalcola** | tariffe, sconti e soglie, utilizzo minimo, durata del blocco — le condizioni commerciali, cioè i numeri su cui si tratta |
+| **Non si ricalcola** | le durate fatturabili e quali comparse sono ripetizioni — sono misure prese leggendo il montaggio |
+
+Il motivo è un limite reale del foglio di calcolo, non una scelta di comodo: per
+sapere se gli stessi fotogrammi compaiono due volte servirebbe confrontare fra
+loro gli intervalli di tutte le clip della stessa banca, tenendo conto delle
+sovrapposizioni parziali. Una formula può sommare, non può riconoscere.
+
+**Conseguenza pratica**: modificare a mano i timecode di un segmento nel foglio
+non cambia il costo, e cancellare o aggiungere righe di segmento non produce un
+conteggio coerente. Quando il montaggio cambia si rilancia il Calculator e si
+riesporta. Il foglio serve a trattare sulle tariffe, non a correggere il
+montaggio.
+
+### Corretto — colonna "Secondi Scoperti" nel foglio Excel
+
+Tre difetti nella stessa colonna, presenti anche nella 1.2.14 pubblicata. I primi
+due trovati controllando il codice compilato, non leggendolo; il terzo è diventato
+visibile solo dopo aver corretto gli altri.
+
+- **I secondi usati e quelli scoperti non sommavano al minimo**: su un minimo di
+  30 secondi si leggeva `Usati 16s - Scoperti 13s`, e chi faceva la sottrazione
+  trovava 14 dove stava scritto 13. I due numeri venivano arrotondati per difetto
+  ciascuno per conto suo (16,28 → 16 e 13,72 → 13). Ora si arrotonda il primo e
+  il secondo si ricava per differenza.
+- **"Usati" mostrava sempre 0.** La frase in colonna era `Min 60s - Usati 0s - Scoperti 15s`:
+  il minimo e il deficit erano corretti, i secondi effettivamente usati no. La durata per
+  banca veniva calcolata ma non arrivava mai alla funzione che scrive il JSON per l'Excel —
+  non era fra i suoi parametri, quindi veniva letta come variabile globale inesistente, che
+  in Lua vale `nil` senza produrre errore. **Il CSV non era toccato**: lì il numero è scritto
+  nudo, senza la frase.
+- **Intestazioni disallineate di una colonna.** Il titolo "Secondi Scoperti" stava sopra la
+  colonna tecnica che contiene la somma dei frame, e il testo del deficit sotto il titolo
+  "Note". Causa: la colonna tecnica non ha titolo, e l'elenco delle intestazioni era stato
+  accorciato a otto voci quando le colonne scritte sono nove.
+
+Corretto anche il riempimento dell'intestazione di categoria, che si fermava una colonna
+prima del bordo della tabella.
+
+### Aggiunto
+- **Scelta della valuta.** Nel Config, in alto, un menu per scegliere la valuta con cui vengono mostrati gli importi: EUR €, USD $, GBP £, CHF, CAD CA$, AUD A$, CNY ¥, JPY ¥, KRW ₩.
+  - **Cambia solo il simbolo mostrato. Nessuna conversione**: le cifre inserite restano quelle che sono. Un avviso lo dice a schermo nel momento del cambio, per non far pensare a un errore di calcolo.
+  - Vale ovunque: interfaccia dei tre script, esportazione CSV ed esportazione Excel.
+  - Nel foglio Excel il simbolo finisce nel **formato delle celle**, non nel testo: le celle restano numeri e le formule del foglio continuano a calcolare.
+  - La scelta è salvata in `repertoire_settings.json`, un file separato dal database delle banche dati: i database esistenti non vengono toccati e, se il file manca, si assume l'euro.
+- **Nuovo modulo condiviso `Settings.lua`** (va in `Fusion/Modules/Lua/`, come `LogManager` e `BugReportDialog`). Chi installa a mano deve copiarlo lì, altrimenti gli script non partono.
+
+### Note
+- Cambiando valuta, le finestre già aperte (Calculator, Monitor) mostrano il simbolo nuovo dopo essere state riaperte.
+- Il simbolo va sempre prima della cifra. Il separatore decimale resta il punto, come nelle versioni precedenti.
+- Chi licenzia da archivi in valute diverse nello stesso progetto deve convertire a mano prima di inserire le tariffe: lo strumento mostra un solo simbolo per tutto e non applica tassi di cambio.
+
 ## [1.2.14] — 2026-10-26
 
 ### Modificato

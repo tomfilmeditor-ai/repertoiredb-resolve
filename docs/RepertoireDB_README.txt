@@ -1,6 +1,6 @@
 ==================================================================
 RepertoireDB — Gestione Costi Materiale di Repertorio
-Versione 1.2.14
+Versione 1.3.0
 ==================================================================
 
 Autore:  Tommaso Feraboli — Film Editor
@@ -193,6 +193,40 @@ La configurazione viene salvata in repertoire_db.json nella stessa
 cartella degli script. E un file JSON testuale, copiabile come backup.
 
 
+SCELTA DELLA VALUTA (v1.3.0+)
+------------------------------
+In alto nella finestra Config, accanto al titolo, c'e un menu "Valuta".
+Il simbolo scelto compare accanto a tutti gli importi: nell'interfaccia
+dei tre script, nel CSV e nel foglio Excel esportati.
+
+Valute disponibili:
+  EUR €   ·   USD $   ·   GBP £   ·   CHF   ·   CAD CA$   ·   AUD A$
+  CNY ¥   ·   JPY ¥   ·   KRW ₩
+
+  !! CAMBIA SOLO IL SIMBOLO MOSTRATO !!
+
+  Le cifre che hai inserito NON vengono convertite. Se una tariffa e
+  3000 e passi da euro a dollari, diventa $3000, non l'equivalente in
+  dollari di 3000 euro. Non ci sono tassi di cambio e non ce ne saranno:
+  le tariffe le negozi tu, e le scrivi nella valuta in cui le hai
+  ottenute.
+
+  Se licenzi da archivi in valute diverse nello stesso progetto, devi
+  convertire a mano prima di inserire le tariffe: lo strumento mostra
+  un solo simbolo per tutto.
+
+Dove finisce la scelta:
+  repertoire_settings.json, un file separato dal database delle banche
+  dati. Se lo cancelli, si torna all'euro e il database resta intatto.
+
+Nel foglio Excel il simbolo viene messo nel formato delle celle, non
+nel testo: le celle restano numeri e le formule del foglio continuano
+a ricalcolare.
+
+Nota: le finestre Calculator e Monitor gia aperte mostrano il simbolo
+nuovo dopo essere state chiuse e riaperte.
+
+
 TAB "MEMORIE" — SNAPSHOT DELLA CONFIGURAZIONE (v1.2.9+)
 --------------------------------------------------------
 Nella finestra Config, la tab "💾 Memorie" salva e richiama
@@ -319,9 +353,12 @@ Avvia RepertoireDB_Calculator da Workspace > Scripts.
      Cambia la vista dal menu "Vista" nella toolbar senza
      dover ricalcolare.
 
-  4. Clicca "Esporta" per salvare il preventivo. Si apre un dialogo
-     dove scegli il formato (CSV o Excel) e l'ordinamento della
+  4. Clicca "Esporta CSV / XLSX" per salvare il preventivo. Si apre un
+     dialogo dove scegli il formato (CSV o Excel) e l'ordinamento della
      sezione segmenti (ordine di montaggio o per banca dati).
+
+     (Fino alla v1.2.14 il pulsante si chiamava solo "Esporta CSV", ma
+     il dialogo offriva entrambi i formati: il nome ne nascondeva meta.)
 
      CSV — un unico file di testo, apribile in qualsiasi foglio di
      calcolo. Contiene:
@@ -348,10 +385,54 @@ Avvia RepertoireDB_Calculator da Workspace > Scripts.
          contate a costo zero
        - Foglio "Riepilogo": i totali per banca, con la colonna
          Sconto % modificabile, i subtotali per categoria e il
-         totale generale
+         totale generale, piu la colonna "Riusate" che dice quante
+         comparse non vengono fatturate perche il materiale era
+         gia conteggiato (v1.3.0+)
 
      L'esportazione Excel richiede Python 3 con openpyxl: vedi
      PREREQUISITI.
+
+     COSA PUOI MODIFICARE NEL FOGLIO, E COSA NO  (v1.3.0+)
+     ------------------------------------------------------
+     Il foglio Excel non e una fotografia dei conti: e un foglio di
+     calcolo che continua a lavorare. Ma non tutto quello che c'e
+     dentro si ricalcola, e la distinzione non e un dettaglio.
+
+     SI RICALCOLA — le condizioni commerciali, cioe i numeri su cui
+     si tratta:
+       - tariffe, nel foglio "Config"
+       - percentuali di sconto e relative soglie
+       - utilizzo minimo fatturabile
+       - durata del blocco, per il modello a blocchi
+     Cambi uno di questi e il costo di ogni clip, i subtotali e il
+     totale generale si aggiornano da soli. E questo il motivo per
+     cui il foglio esiste: provare due ipotesi di tariffa davanti al
+     produttore senza riaprire Resolve.
+
+     NON SI RICALCOLA — le misure prese sulla timeline:
+       - le durate sorgente effettivamente fatturabili
+       - quali comparse sono ripetizioni di materiale gia pagato
+     Questi non sono calcoli: sono rilevazioni fatte leggendo il
+     montaggio, e il foglio Excel non ha modo di rifarle. Per sapere
+     se gli stessi fotogrammi sorgente compaiono due volte nel
+     montaggio bisogna confrontare fra loro gli intervalli di tutte
+     le clip della stessa banca, e tenere conto delle sovrapposizioni
+     parziali. Una formula di foglio di calcolo non lo sa fare: puo
+     sommare, non puo riconoscere.
+
+     Percio quei valori arrivano dal Calculator come dati gia
+     stabiliti, scritti in celle che il foglio non ricalcola.
+
+     CONSEGUENZA PRATICA, DA SAPERE:
+     se modifichi a mano i timecode di un segmento nel foglio
+     "Segmenti", il costo NON cambia. Se cancelli o aggiungi righe di
+     segmento, il conteggio delle clip e delle durate non torna
+     coerente. Il foglio non si accorge della modifica perche quelle
+     quantita non le ha calcolate lui.
+
+     Quando il montaggio cambia, la strada giusta e una sola:
+     rilanciare il Calculator e riesportare. Il foglio serve a
+     trattare sulle tariffe, non a correggere il montaggio.
 
 
 PASSO 5 — Monitor in tempo reale  (RepertoireDB_Monitor)
@@ -959,6 +1040,34 @@ CHANGELOG
 
 Cronologia completa e dettagliata: CHANGELOG.md nella cartella degli
 script. Qui le novita in sintesi.
+
+v1.3.0 (2026-10-30)
+  - FIX IMPORTANTE, foglio Excel: le comparse ripetute dello stesso
+    materiale venivano fatturate. Il foglio sommava la durata totale di
+    ogni segmento e contava tutte le comparse, mentre il Calculator
+    conta una volta sola i fotogrammi sorgente gia pagati. Su una
+    timeline reale il foglio dava 64530 dove il motore dava 64460, e su
+    una banca "A clip" contava 42 clip invece di 6. Il CSV non era
+    toccato. Vedi COSA PUOI MODIFICARE NEL FOGLIO, E COSA NO
+  - FIX, foglio Excel: la colonna "Secondi Scoperti" mostrava sempre
+    "Usati 0s" perche la durata per banca non arrivava al generatore
+  - FIX, foglio Excel: il titolo "Secondi Scoperti" stava sopra la
+    colonna sbagliata, e il dato sotto il titolo "Note"
+  - FIX, foglio Excel: i secondi usati e quelli scoperti non sommavano
+    al minimo (16 + 13 su un minimo di 30) perche arrotondati ciascuno
+    per conto suo
+  - Nuova colonna "Riusate" nel Riepilogo: quante comparse non vengono
+    fatturate perche il materiale era gia conteggiato
+  - Il pulsante del Calculator si chiama ora "Esporta CSV / XLSX": apre
+    un dialogo con entrambi i formati, e il nome vecchio ne nascondeva
+    meta
+  - SCELTA DELLA VALUTA: menu nel Config per scegliere il simbolo con
+    cui vengono mostrati gli importi (euro, dollaro, sterlina, franco
+    svizzero, dollaro canadese e australiano, yuan, yen, won).
+    Cambia solo il simbolo: le cifre non vengono convertite.
+    Vale per interfaccia, CSV ed Excel. Vedi sezione SCELTA DELLA VALUTA
+  - Nuovo modulo condiviso Settings.lua: va in Fusion/Modules/Lua/
+    insieme agli altri due. Chi installa a mano deve copiarlo li
 
 v1.2.14 (2026-10-26)
   - Le segnalazioni bug vanno al nuovo indirizzo dedicato

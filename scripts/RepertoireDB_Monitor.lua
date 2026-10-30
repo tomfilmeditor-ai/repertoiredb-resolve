@@ -15,7 +15,7 @@
 -- Sostieni il progetto: https://paypal.me/acoffeefortom
 -- ============================================================
 
-local VERSION = "1.2.14"
+local VERSION = "1.3.0"
 
 local LogManager = require("LogManager")
 LogManager:init()

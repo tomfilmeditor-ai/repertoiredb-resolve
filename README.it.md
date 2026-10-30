@@ -5,7 +5,7 @@ Legge la timeline e dice quanto costa il repertorio che c'è dentro.
 
 🇬🇧 [Read in English](README.md)
 
-![Versione](https://img.shields.io/badge/versione-1.2.13-blue)
+![Versione](https://img.shields.io/badge/versione-1.3.0-blue)
 ![Sistema](https://img.shields.io/badge/sistema-macOS%20%7C%20Windows-lightgrey)
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)
 ![Licenza](https://img.shields.io/badge/licenza-MIT-green)
@@ -87,6 +87,10 @@ forfait (il video li usa tutti; fotografie e giornali usano a clip o forfait)
 - **Utilizzo minimo** — quando l'uso effettivo sta sotto il minimo fatturabile
   dell'archivio, il report mostra la differenza
 - **Audio eccedente** — l'audio usato oltre la copertura video è conteggiato al 50%
+- **Valuta** — scegli il simbolo con cui vengono mostrati gli importi (euro,
+  dollaro, sterlina, franco svizzero, dollaro canadese e australiano, yuan, yen,
+  won). Cambia **solo il simbolo**: niente viene convertito e non si applica
+  alcun tasso di cambio
 - **Esportazione** — report completo in CSV o Excel (`.xlsx`)
 
 **L'Excel non è una fotografia dei conti: è un foglio di calcolo che continua a lavorare.**
@@ -98,6 +102,29 @@ lo script.
 
 Serve quando il montaggio è chiuso ma la trattativa no: provi due ipotesi di
 tariffa davanti al produttore e vedi subito dove finisce il preventivo.
+
+### Cosa si ricalcola nel foglio, e cosa no
+
+Non tutto quello che c'è nel foglio è una formula, e la differenza non è un
+dettaglio.
+
+| | |
+|---|---|
+| **Si ricalcola** | tariffe, percentuali di sconto e relative soglie, utilizzo minimo fatturabile, durata del blocco — le condizioni commerciali, cioè i numeri su cui si tratta |
+| **Non si ricalcola** | le durate sorgente fatturabili, e quali comparse sono ripetizioni di materiale già pagato — sono misure prese leggendo il montaggio |
+
+È un limite reale del foglio di calcolo, non una scelta di comodo. Per sapere se
+gli stessi fotogrammi sorgente compaiono due volte nel montaggio bisogna
+confrontare fra loro gli intervalli di tutte le clip della stessa banca, tenendo
+conto delle sovrapposizioni parziali. Una formula può sommare, non può
+riconoscere. Quei valori arrivano quindi dal Calculator come dati già stabiliti,
+scritti in celle che il foglio non ricalcola.
+
+**Conseguenza pratica**: modificare a mano i timecode di un segmento nel foglio
+`Segmenti` **non** cambia il costo, e cancellare o aggiungere righe di segmento
+non produce un conteggio coerente. Quando il montaggio cambia, si rilancia il
+Calculator e si riesporta. Il foglio serve a trattare sulle tariffe, non a
+correggere il montaggio.
 
 > **I numeri sono indicativi.** Il report è un calcolo di lavoro, non la
 > contabilità ufficiale della produzione. Le condizioni contrattuali variano e
@@ -128,7 +155,8 @@ quando ha finito. Poi, in Resolve:
     Workspace > Scripts > Comp > RepertoireDB_Config
 
 Se installi a mano: gli script in `scripts/` vanno in
-`Fusion/Scripts/Comp/RepertoireDB/`, i due moduli in `modules/` vanno in
+`Fusion/Scripts/Comp/RepertoireDB/`, i tre moduli in `modules/`
+(`LogManager.lua`, `BugReportDialog.lua` e, dalla 1.3.0, `Settings.lua`) vanno in
 `Fusion/Modules/Lua/` — **due cartelle diverse**. Con i moduli nel posto
 sbagliato gli script non partono.
 
@@ -139,9 +167,12 @@ sbagliato gli script non partono.
 - **DaVinci Resolve Studio 19 o 20.** La versione gratuita non funziona: dalla
   19.1 l'interfaccia di scripting su cui sono costruiti questi strumenti
   (UIManager) è solo per Studio.
-- **L'interfaccia è in italiano** e gli importi sono in euro. Lo strumento è
-  nato per i documentari dell'autore e non è mai stato tradotto. Vedi la
+- **L'interfaccia è in italiano.** Lo strumento è nato per i documentari
+  dell'autore e non è mai stato tradotto. Vedi la
   [discussione sul supporto multilingua](../../issues).
+  Gli importi però non sono più solo in euro: dalla 1.3.0 la valuta si sceglie
+  nel `Config` e vale per interfaccia, CSV ed Excel. È un simbolo, non una
+  conversione — le tariffe vanno inserite nella valuta in cui licenzi davvero.
 - macOS o Windows
 - Solo per l'esportazione in Excel: Python 3 con `openpyxl` (c'è uno script di
   supporto, `RepertoireDB_Installer.lua`, che lo prepara)
@@ -158,6 +189,13 @@ sbagliato gli script non partono.
   approssimati
 - **Windows**: il codice è cross-platform e l'installer è fatto per entrambi i
   sistemi, ma l'uso quotidiano è provato su macOS
+- **Il foglio Excel esportato non sa riconoscere da sé il materiale ripetuto** —
+  quell'informazione la riceve dal Calculator. Quindi le modifiche al foglio
+  `Segmenti` che cambierebbero quale materiale è fatturabile non si riflettono
+  nei totali. Vedi *Cosa si ricalcola nel foglio, e cosa no* più sopra
+- **Una valuta per volta.** L'impostazione della valuta è un simbolo valido per
+  tutto il database. Se licenzi da archivi in valute diverse nello stesso
+  progetto, le tariffe vanno convertite a mano prima di inserirle
 - Lo strumento legge quello che c'è in timeline. Non può sapere nulla di
   condizioni contrattuali che non hai inserito nel database delle banche dati
 
