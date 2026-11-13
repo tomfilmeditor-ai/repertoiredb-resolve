@@ -15,7 +15,7 @@
 -- Sostieni il progetto: https://paypal.me/acoffeefortom
 -- ============================================================
 
-local VERSION = "1.4.0"
+local VERSION = "1.4.1"
 
 local LogManager = require("LogManager")
 LogManager:init()
@@ -217,13 +217,13 @@ end
 local function scan()
     local resolve  = app:GetResolve()
     local project  = resolve:GetProjectManager():GetCurrentProject()
-    if not project then return nil, "Nessun progetto aperto" end
+    if not project then return nil, T("Nessun progetto aperto") end
 
     local timeline = project:GetCurrentTimeline()
-    if not timeline then return nil, "Nessuna timeline attiva" end
+    if not timeline then return nil, T("Nessuna timeline attiva") end
 
     local db = loadDB()
-    if #db == 0 then return nil, "Nessuna banca dati configurata" end
+    if #db == 0 then return nil, T("Nessuna banca dati configurata") end
     LogManager:info("Monitor.lua", "Video banks caricati - " .. #db .. " banche")
     local dbMap = dbByName(db)
 
@@ -437,7 +437,7 @@ local function refresh()
     local videoByDB, fotoByDB, totals, tlName, videoSegs, audioSegs = scan()
 
     if not videoByDB then
-        local errMsg = fotoByDB or "Errore sconosciuto"
+        local errMsg = fotoByDB or T("Errore sconosciuto")
         LogManager:error("Monitor.lua", "Errore calcolo durata banca: " .. errMsg)
         local err = tree:NewItem()
         err.Text[0] = "⚠  " .. errMsg
@@ -538,7 +538,7 @@ local function refresh()
 
                     local it = tree:NewItem()
                     it.Text[0]      = name
-                    it.Text[1]      = d.clipCount .. " clip"
+                    it.Text[1]      = d.clipCount .. T(" clip")
                     it.Text[2]      = tostring(vs)
                     it.Text[3]      = tostring(as_)
                     it.Font[0]      = ui:Font{ PixelSize=FONT_SIZE_MAIN, Bold=true }
@@ -556,7 +556,7 @@ local function refresh()
                 if #names > 1 then
                     local sub = tree:NewItem()
                     sub.Text[0] = T("Totale ") .. cat
-                    sub.Text[1] = catTotClip .. " clip"
+                    sub.Text[1] = catTotClip .. T(" clip")
                     sub.Text[2] = tostring(catTotVSegs)
                     sub.Text[3] = tostring(catTotASegs)
                     sub.Font[0] = ui:Font{ PixelSize=FONT_SIZE_MAIN, Bold=true }
@@ -671,7 +671,7 @@ local function selectBankInTimeline(bankName)
     local count = #matchingClips
     if count == 0 then
         activeFlags = {}
-        win:Find("LblInfo").Text = bankName .. ": nessun segmento"
+        win:Find("LblInfo").Text = bankName .. T(": nessun segmento")
         return
     end
 
@@ -730,10 +730,10 @@ win.On.BtnReadme.Clicked = function()
     local home = os.getenv("HOME") or os.getenv("USERPROFILE") or "."
     local path
     if sep == "\\" then
-        path = (os.getenv("APPDATA") or "") .. "\\Blackmagic Design\\DaVinci Resolve\\Fusion\\Scripts\\Comp\\RepertoireDB\\RepertoireDB_README.txt"
+        path = Settings.readmeFor((os.getenv("APPDATA") or "") .. "\\Blackmagic Design\\DaVinci Resolve\\Fusion\\Scripts\\Comp\\RepertoireDB", "\\")
         os.execute('start "" "' .. path .. '"')
     else
-        path = home .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp/RepertoireDB/RepertoireDB_README.txt"
+        path = Settings.readmeFor(home .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp/RepertoireDB", "/")
         os.execute('open "' .. path .. '"')
     end
 end

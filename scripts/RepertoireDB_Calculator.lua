@@ -15,7 +15,7 @@
 -- Sostieni il progetto: https://paypal.me/acoffeefortom
 -- ============================================================
 
-local SCRIPT_VERSION = "1.4.0"
+local SCRIPT_VERSION = "1.4.1"
 
 -- LogManager per logging centralizzato
 local LogManager = require("LogManager")
@@ -124,16 +124,16 @@ local function getReadmePath()
     local sep = package.config:sub(1,1)
     if sep == "\\" then
         local pd = os.getenv("PROGRAMDATA") or "C:\\ProgramData"
-        return pd .. "\\Blackmagic Design\\DaVinci Resolve\\Fusion\\Scripts\\Comp\\RepertoireDB\\RepertoireDB_README.txt"
+        return Settings.readmeFor(pd .. "\\Blackmagic Design\\DaVinci Resolve\\Fusion\\Scripts\\Comp\\RepertoireDB", "\\")
     end
     local home = os.getenv("HOME") or "."
     local h = io.popen("uname -s 2>/dev/null")
     local osname = h and h:read("*a") or ""
     if h then h:close() end
     if osname:match("Darwin") then
-        return home .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp/RepertoireDB/RepertoireDB_README.txt"
+        return Settings.readmeFor(home .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp/RepertoireDB", "/")
     else
-        return home .. "/.local/share/DaVinciResolve/Fusion/Scripts/Comp/RepertoireDB/RepertoireDB_README.txt"
+        return Settings.readmeFor(home .. "/.local/share/DaVinciResolve/Fusion/Scripts/Comp/RepertoireDB", "/")
     end
 end
 
@@ -287,21 +287,21 @@ end
 local function calcCostBase(entry, sourceSec)
     local model = entry.model
     local rate  = entry.rate
-    if not rate then return nil, "da definire" end
+    if not rate then return nil, T("da definire") end
     if model == Settings.MODEL.CLIP then
-        return rate, "1 utilizzo"
+        return rate, T("1 utilizzo")
     elseif model == Settings.MODEL.SECOND then
         local secs = math.ceil(sourceSec)
-        return secs * rate, secs .. "s sorg"
+        return secs * rate, string.format(T("%ds sorg"), secs)
     elseif model == Settings.MODEL.BLOCK then
         local blockSec = entry.blockSec or 30
         local blocks   = math.ceil(sourceSec / blockSec)
-        return blocks * rate, blocks .. "bl×" .. blockSec .. "s"
+        return blocks * rate, string.format(T("%dbl×%ds"), blocks, blockSec)
     elseif model == Settings.MODEL.MINUTE then
         local mins = math.ceil(sourceSec / 60.0)
-        return mins * rate, mins .. "min"
+        return mins * rate, string.format(T("%dmin"), mins)
     elseif model == Settings.MODEL.FLAT then
-        return rate, "forfait"
+        return rate, T("forfait")
     end
     return 0, "?"
 end
@@ -395,7 +395,7 @@ local function applyDiscounts(entry, totalSec, costBase, clipCount)
     -- Etichetta soglia per le note
     local threshLabel
     if isClipModel and appliedDiscount.threshold_clips then
-        threshLabel = appliedDiscount.threshold_clips .. " clip"
+        threshLabel = string.format(T("%s clip"), appliedDiscount.threshold_clips)
     else
         threshLabel = tostring(appliedDiscount.threshold_sec) .. "s"
     end
@@ -802,10 +802,10 @@ local function aggregateCosts(results, fps)
 
         if model == Settings.MODEL.CLIP then
             clipCost = entry.rate   -- nil se tariffa non definita
-            detail   = "1 utilizzo (flat)"
+            detail   = T("1 utilizzo (flat)")
         elseif model == Settings.MODEL.FLAT then
             clipCost = 0
-            detail   = "compreso nel forfait"
+            detail   = T("compreso nel forfait")
         else
             -- Costo proporzionale: nessun ceil, valore lineare sulla durata unica.
             -- La fatturazione con arrotondamento avviene sul totale banca (dbCostBase).
@@ -816,10 +816,10 @@ local function aggregateCosts(results, fps)
                 local durStr = framesToDur(seg.sourceFrames or 0, seg.srcFps or fps)
                 local rtPfx  = seg.retimeType and ("[" .. seg.retimeType .. "] ") or ""
                 if seg.dupStatus == "duplicato" then
-                    table.insert(segDetails, rtPfx .. durStr .. "=⚠RIPETUTO")
+                    table.insert(segDetails, rtPfx .. durStr .. T("=⚠RIPETUTO"))
                 elseif seg.dupStatus == "parziale" then
                     local uDur = framesToDur(seg.uniqueFrames, seg.srcFps or fps)
-                    table.insert(segDetails, rtPfx .. durStr .. "(+" .. uDur .. "unici)")
+                    table.insert(segDetails, rtPfx .. durStr .. string.format(T("(+%sunici)"), uDur))
                 else
                     table.insert(segDetails, rtPfx .. durStr)
                 end
@@ -950,12 +950,12 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
     local home    = os.getenv("HOME") or os.getenv("USERPROFILE") or "."
     local desktop = home .. "/Desktop"
     local dir = fu:RequestDir(desktop)
-    if not dir or dir == "" then return nil, "Esportazione annullata" end
+    if not dir or dir == "" then return nil, T("Esportazione annullata") end
     if not dir:match("[/\\]$") then dir = dir .. "/" end
     local path = dir .. filename
 
     local f = io.open(path, "w")
-    if not f then return nil, "Impossibile scrivere in: " .. dir end
+    if not f then return nil, T("Impossibile scrivere in: ") .. dir end
 
     audioTotal = audioTotal or 0
 
@@ -1037,10 +1037,10 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
             end
             -- B) Subtotale categoria (bold con ***)
             if cat == Settings.MEDIA.VIDEO then
-                f:write(string.format('"*** SUBTOTALE VIDEO ***","","","","%.2f","%s","",""\n',
+                f:write(string.format('"*** ' .. T("SUBTOTALE VIDEO") .. ' ***","","","","%.2f","%s","",""\n',
                     subtot, framesToDur(subtotDurFr, fps)))
             else
-                f:write(string.format('"*** SUBTOTALE %s ***","","","","%.2f","%d clip",""\n',
+                f:write(string.format('"*** ' .. T("SUBTOTALE %s") .. ' ***","","","","%.2f","%d ' .. T("clip") .. '",""\n',
                     string.upper(Settings.mediaLabel(cat)), subtot, subtotClips))
             end
             f:write("\n")
@@ -1056,15 +1056,15 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
         table.sort(audioNames)
         for _, name in ipairs(audioNames) do
             local ex = excessByDB[name]
-            f:write(string.format('"%s","%s","%.2f","50%% tariffa piena - no sconti"\n',
+            f:write(string.format('"%s","%s","%.2f","' .. T("50%% tariffa piena - no sconti") .. '"\n',
                 name, ex.durStr or "", ex.cost or 0))
         end
-        f:write(string.format('"*** SUBTOTALE AUDIO ECCEDENTE ***","","%.2f",""\n', audioTotal))
+        f:write(string.format('"*** ' .. T("SUBTOTALE AUDIO ECCEDENTE") .. ' ***","","%.2f",""\n', audioTotal))
         f:write("\n")
     end
 
     -- ── C) TOTALE GENERALE ──────────────────────────────────────────────────
-    f:write(string.format('"*** TOTALE GENERALE ***","","","","%.2f","%s","",""\n',
+    f:write(string.format('"*** ' .. T("TOTALE GENERALE") .. ' ***","","","","%.2f","%s","",""\n',
         grandTotal + audioTotal, framesToDur(grandFrames or 0, fps)))
     f:write("\n")
 
@@ -1076,7 +1076,7 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
         for k in pairs(undefinedBanks) do table.insert(uNames, k) end
         table.sort(uNames)
         for _, name in ipairs(uNames) do
-            f:write(string.format('"%s","Costo da definire — non incluso nel totale"\n', name))
+            f:write(string.format('"%s","' .. T("Costo da definire — non incluso nel totale") .. '"\n', name))
         end
         f:write("\n")
     end
@@ -1106,10 +1106,10 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
             local note    = ""
             if row.model == Settings.MODEL.CLIP then
                 segCost = (segIdx == 1) and row.cost or 0
-                if segIdx > 1 then note = "incluso nel primo utilizzo" end
+                if segIdx > 1 then note = T("incluso nel primo utilizzo") end
             elseif row.model == Settings.MODEL.FLAT then
                 segCost = 0
-                note    = "compreso nel forfait"
+                note    = T("compreso nel forfait")
             else
                 local ds = seg.dupStatus or "nuovo"
                 if ds == "duplicato" then
@@ -1132,7 +1132,7 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
             local durSrc    = framesToDur(seg.sourceFrames or 0, seg.srcFps or fps)
             local durMontato = framesToDur(math.floor((seg.timelineSec or seg.sourceSec or 0) * fps + 0.5), fps)
             local hideSegCost = (row.model == Settings.MODEL.MINUTE or row.model == Settings.MODEL.BLOCK)
-            local segCostStr  = (row.model == Settings.MODEL.FLAT) and "compreso nel forfait"
+            local segCostStr  = (row.model == Settings.MODEL.FLAT) and T("compreso nel forfait")
                                 or (hideSegCost and "" or (segCost and string.format("%.2f", segCost) or "DA DEFINIRE"))
             f:write(string.format('"%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s"\n',
                 row.mediaName, Settings.mediaLabel(row.mediaType or Settings.MEDIA.VIDEO),
@@ -1145,7 +1145,7 @@ local function exportCSV(rows, byDB, byDur, dbFinalCost, dbDiscountNote, grandTo
         end
         if row.segmentCount > 1 then
             local rowCostStr = row.cost and string.format("%.2f", row.cost) or T("DA DEFINIRE")
-            f:write(string.format('"  → Subtotale segmenti: %s","","%s","","","","","","","","%s",""\n',
+            f:write(string.format('"  → ' .. T("Subtotale segmenti: %s") .. '","","%s","","","","","","","","%s",""\n',
                 row.mediaName, row.dbName, rowCostStr))
         end
     end
@@ -1238,7 +1238,7 @@ local function buildExportJSON(rows, byDB, byDur, dbFinalCost, dbDiscountNote,
             if not hideSegCost then
                 if row.model == Settings.MODEL.CLIP then
                     segCost = (segIdx == 1) and row.cost or 0
-                    if segIdx > 1 then note = "incluso nel primo utilizzo" end
+                    if segIdx > 1 then note = T("incluso nel primo utilizzo") end
                 else
                     local ds = seg.dupStatus or "nuovo"
                     if ds == "duplicato" then
@@ -1317,7 +1317,7 @@ local function openReadmeFile()
     -- Verifica se il file esiste
     local f = io.open(path, "r")
     if not f then
-        return false, "README non trovato: " .. path
+        return false, T("README non trovato: ") .. path
     end
     f:close()
 
@@ -1448,8 +1448,8 @@ local function buildCalcWindow()
 
     -- Popola ViewMode combo
     local viewCombo = win:Find("ViewMode")
-    viewCombo:AddItem("Per banca")
-    viewCombo:AddItem("Ordine di montaggio")
+    viewCombo:AddItem(T("Per banca"))
+    viewCombo:AddItem(T("Ordine di montaggio"))
 
     local function refreshTree(rows, byDB, byDur, dbFinalCost, dbDiscountNote,
                                grandTotal, grandFrames, fps, unknownClips,
@@ -1536,7 +1536,7 @@ local function buildCalcWindow()
                     if cat == Settings.MEDIA.VIDEO then
                         local durStr  = framesToDur(byDur and byDur[name] or 0, fps)
                         subtotDurFr   = subtotDurFr + (byDur and byDur[name] or 0)
-                        it.Text[6] = durStr .. (hasDisc and ("  [lordo " .. Settings.money(base) .. "]") or "")
+                        it.Text[6] = durStr .. (hasDisc and string.format(T("  [lordo %s]"), Settings.money(base)) or "")
                         -- Badge secondi inutilizzati per banca
                         local entry = dbEntryByName and dbEntryByName[name]
                         local prop  = byDB and byDB[name] or 0
@@ -1556,7 +1556,8 @@ local function buildCalcWindow()
                     else
                         local nc    = clipCountByDB[name] or 0
                         subtotClips = subtotClips + nc
-                        it.Text[6] = nc .. " clip" .. (hasDisc and ("  [lordo " .. Settings.money(base) .. "]") or "")
+                        it.Text[6] = string.format(T("%d clip"), nc)
+                            .. (hasDisc and string.format(T("  [lordo %s]"), Settings.money(base)) or "")
                     end
                     tree:AddTopLevelItem(it)
 
@@ -1584,7 +1585,7 @@ local function buildCalcWindow()
                     sub.Text[6] = framesToDur(subtotDurFr, fps)
                     grandVideoFr = grandVideoFr + subtotDurFr
                 else
-                    sub.Text[6] = subtotClips .. " clip tot."
+                    sub.Text[6] = string.format(T("%d clip tot."), subtotClips)
                 end
                 tree:AddTopLevelItem(sub)
             end
@@ -1608,7 +1609,7 @@ local function buildCalcWindow()
                 local it = tree:NewItem()
                 it.Text[0] = "    " .. name
                 it.Text[5] = ex.cost and string.format("%.2f", ex.cost) or T("DA DEFINIRE")
-                it.Text[6] = ex.durStr .. "  · 50% tariffa piena · no sconti"
+                it.Text[6] = ex.durStr .. T("  · 50% tariffa piena · no sconti")
                 it.Font[0] = ui:Font{ Bold=true }
                 it.Font[5] = ui:Font{ Bold=true }
                 tree:AddTopLevelItem(it)
@@ -1629,7 +1630,7 @@ local function buildCalcWindow()
         totRow.Text[0] = T("  TOTALE GENERALE")
         totRow.Text[5] = string.format("%.2f", grandTotal + audioTot)
         totRow.Text[6] = framesToDur(grandVideoFr, fps)
-            .. (audioTot > 0 and ("  · audio eccedente " .. Settings.money(audioTot)) or "")
+            .. (audioTot > 0 and string.format(T("  · audio eccedente %s"), Settings.money(audioTot)) or "")
         totRow.Font[0] = ui:Font{ Bold=true }
         totRow.Font[5] = ui:Font{ Bold=true }
         tree:AddTopLevelItem(totRow)
@@ -1655,8 +1656,8 @@ local function buildCalcWindow()
         local viewMode = win:Find("ViewMode").CurrentIndex  -- 0=per banca, 1=ordine montaggio
 
         local dHead = tree:NewItem()
-        dHead.Text[0] = viewMode == 0 and "DETTAGLIO PER BANCA"
-                                       or "DETTAGLIO — ORDINE DI MONTAGGIO"
+        dHead.Text[0] = viewMode == 0 and T("DETTAGLIO PER BANCA")
+                                       or T("DETTAGLIO — ORDINE DI MONTAGGIO")
         dHead.Font[0] = ui:Font{ Bold=true }
         tree:AddTopLevelItem(dHead)
 
@@ -1712,12 +1713,12 @@ local function buildCalcWindow()
                     local ds     = seg.dupStatus or "nuovo"
                     local status
                     if ds == "duplicato" then
-                        status = "⚠ RIPETUTO — non conteggiato"
+                        status = T("⚠ RIPETUTO — non conteggiato")
                     elseif ds == "parziale" then
                         status = string.format(T("⚠ parziale — %s unici su %s"),
                             framesToDur(seg.uniqueFrames or 0, seg.srcFps or fps), durStr)
                     else
-                        status = "src: " .. (seg.srcIn or "?") .. " → " .. (seg.srcOut or "?")
+                        status = T("src: ") .. (seg.srcIn or "?") .. " → " .. (seg.srcOut or "?")
                     end
                     local rtInfo = seg.retimeType and ("  [" .. seg.retimeType .. "]") or ""
                     sub.Text[0] = string.format(T("    ↳ uso %d/%d"), segIdx, #row.segments)
@@ -1743,7 +1744,7 @@ local function buildCalcWindow()
                 Settings.moneySpaced(grandTotal + audioTotLabel), Settings.money(grandTotal), Settings.money(audioTotLabel), grandDurStr)
             or  string.format(T("TOTALE: %s  |  Durata: %s"), Settings.moneySpaced(grandTotal), grandDurStr)
         if #undefWarn > 0 then
-            baseLabel = baseLabel .. "   ⚠ Ancora da definire i costi di: " .. table.concat(undefWarn, ", ")
+            baseLabel = baseLabel .. T("   ⚠ Ancora da definire i costi di: ") .. table.concat(undefWarn, ", ")
         end
         win:Find("LblTotal").Text = baseLabel
         win:Find("BtnExport").Enabled = true
@@ -1751,7 +1752,7 @@ local function buildCalcWindow()
         local unknownList = {}
         for k in pairs(unknownClips) do table.insert(unknownList, k) end
         win:Find("LblUnknown").Text = #unknownList > 0
-            and ("⚠ Tag non trovati in config: " .. table.concat(unknownList, ", "))
+            and (T("⚠ Tag non trovati in config: ") .. table.concat(unknownList, ", "))
             or  ""
     end
 
@@ -1848,10 +1849,10 @@ local function buildCalcWindow()
         })
         local fmtCombo  = dlg:Find("FmtCombo")
         local sortCombo = dlg:Find("SortCombo")
-        fmtCombo:AddItem("CSV (.csv)")
-        fmtCombo:AddItem("Excel (.xlsx)  — richiede Python + openpyxl")
-        sortCombo:AddItem("Ordine di montaggio")
-        sortCombo:AddItem("Per banca dati")
+        fmtCombo:AddItem(T("CSV (.csv)"))
+        fmtCombo:AddItem(T("Excel (.xlsx)  — richiede Python + openpyxl"))
+        sortCombo:AddItem(T("Ordine di montaggio"))
+        sortCombo:AddItem(T("Per banca dati"))
 
         dlg.On.BtnDoExport.Clicked = function()
             exportOpts.formatXLSX = (fmtCombo.CurrentIndex == 1)

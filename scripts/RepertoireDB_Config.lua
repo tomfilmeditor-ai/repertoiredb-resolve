@@ -17,7 +17,7 @@
 
 local json = require("dkjson")
 
-local VERSION = "1.4.0"
+local VERSION = "1.4.1"
 
 local LogManager = require("LogManager")
 LogManager:init()
@@ -158,15 +158,15 @@ end
 -- importFromJSON(path) → table|nil, string|nil — Legge un file JSON esterno e ritorna la lista banche dati o nil, errMsg.
 local function importFromJSON(path)
     local f = io.open(path, "r")
-    if not f then return nil, "File non trovato: " .. path end
+    if not f then return nil, T("File non trovato: ") .. path end
     local content = f:read("*all")
     f:close()
     local data, _, err = json.decode(content)
     if err then
         LogManager:error("Config.lua", "Errore importazione JSON: " .. err)
-        return nil, "JSON non valido: " .. err
+        return nil, T("JSON non valido: ") .. err
     end
-    if type(data) ~= "table" then return nil, "Formato JSON non valido" end
+    if type(data) ~= "table" then return nil, T("Formato JSON non valido") end
     LogManager:info("Config.lua", "Import JSON completato - " .. #data .. " banche caricate")
     return data, nil
 end
@@ -177,11 +177,11 @@ end
 -- importFromCSV(path) → table|nil, string|nil — Parsa un file CSV (sep auto-rilevato) e ritorna la lista banche dati o nil, errMsg.
 local function importFromCSV(path)
     local f = io.open(path, "r")
-    if not f then return nil, "File non trovato: " .. path end
+    if not f then return nil, T("File non trovato: ") .. path end
     local lines = {}
     for line in f:lines() do table.insert(lines, line) end
     f:close()
-    if #lines < 2 then return nil, "CSV vuoto o senza dati" end
+    if #lines < 2 then return nil, T("CSV vuoto o senza dati") end
 
     -- Rileva separatore dalla prima riga non-commento e non-vuota
     local sep = ","
@@ -252,7 +252,7 @@ local function importFromCSV(path)
             end
         end
     end
-    if #result == 0 then return nil, "Nessuna voce valida trovata nel CSV" end
+    if #result == 0 then return nil, T("Nessuna voce valida trovata nel CSV") end
     return result, nil
 end
 
@@ -303,7 +303,7 @@ end
 local function tagSelectedClips(db)
     local project = app:GetResolve():GetProjectManager():GetCurrentProject()
     if not project then
-        return false, "Nessun progetto aperto in DaVinci Resolve."
+        return false, T("Nessun progetto aperto in DaVinci Resolve.")
     end
     local mp = project:GetMediaPool()
 
@@ -406,9 +406,9 @@ local function tagSelectedClips(db)
                 #skipped, table.concat(skipped, ", "))
         end
         if tagged == 0 and #skipped == 0 then
-            msg = "⚠  Nessuna clip aggiornata."
+            msg = T("⚠  Nessuna clip aggiornata.")
         elseif tagged > 0 and #skipped == 0 then
-            msg = msg .. "  — seleziona il prossimo gruppo."
+            msg = msg .. T("  — seleziona il prossimo gruppo.")
         end
         dlg:Find("LblTagStatus").Text = msg
     end
@@ -501,7 +501,7 @@ local function saveMemoryFile(name, data)
     local path = dir .. sep .. name .. ".json"
     local payload = { version = 1, saved = os.date("%Y-%m-%d %H:%M"), banks = data }
     local f = io.open(path, "w")
-    if not f then return false, "Impossibile scrivere il file" end
+    if not f then return false, T("Impossibile scrivere il file") end
     f:write(json.encode(payload, { indent = true }))
     f:close()
     return true, nil
@@ -509,17 +509,17 @@ end
 
 local function loadMemoryFile(path)
     local f = io.open(path, "r")
-    if not f then return nil, "File non trovato" end
+    if not f then return nil, T("File non trovato") end
     local content = f:read("*all")
     f:close()
     local payload, _, err = json.decode(content)
-    if err then return nil, "JSON corrotto: " .. tostring(err) end
+    if err then return nil, T("JSON corrotto: ") .. tostring(err) end
     if type(payload) == "table" and payload.banks then
         return payload.banks, nil
     elseif type(payload) == "table" and #payload > 0 then
         return payload, nil
     end
-    return nil, "Formato non riconosciuto"
+    return nil, T("Formato non riconosciuto")
 end
 
 local function listMemoryFiles()
@@ -570,8 +570,8 @@ local function buildWindow(db)
     local win = disp:AddWindow({
         ID = "DBConfig",
         WindowTitle = string.format(T("RepertoireDB v%s — Configurazione  |  © Tommaso Feraboli Film Editor"), VERSION),
-        Geometry = { 80, 80, 920, 820 },
-        MinimumSize = { 900, 800 },
+        Geometry = { 80, 80, 1010, 820 },
+        MinimumSize = { 990, 800 },
         ui:VGroup{
             ui:HGroup{
                 ui:Label{ Text  = T("RepertoireDB v") .. VERSION,
@@ -581,7 +581,7 @@ local function buildWindow(db)
                 ui:Label{ Text  = T("Lingua:"), MinimumSize={55,22},
                     Alignment = { AlignRight = true, AlignVCenter = true },
                     StyleSheet = "color: #B4B4B4;" },
-                ui:ComboBox{ ID="LangCombo", MinimumSize={190,26},
+                ui:ComboBox{ ID="LangCombo", MinimumSize={170,26},
                     ToolTip = T("Lingua dell'interfaccia. Con Automatico segue la lingua del sistema operativo, non quella di DaVinci Resolve: sono due impostazioni diverse.") },
                 ui:HGap{10},
                 ui:Label{ Text  = T("Valuta:"), MinimumSize={55,22},
@@ -766,9 +766,10 @@ local function buildWindow(db)
     end
 
     -- Valuta: solo il simbolo mostrato, nessuna conversione degli importi
-    local comboCur = win:Find("CurrencyCombo")
-    for _, c in ipairs(Settings.CURRENCIES) do comboCur:AddItem(c.label) end
-    for i, c in ipairs(Settings.CURRENCIES) do
+    local comboCur    = win:Find("CurrencyCombo")
+    local curOptions  = Settings.currencyOptions()
+    for _, c in ipairs(curOptions) do comboCur:AddItem(c.label) end
+    for i, c in ipairs(curOptions) do
         if c.code == Settings.code() then comboCur.CurrentIndex = i - 1 break end
     end
 
@@ -832,7 +833,7 @@ local function buildWindow(db)
                            (selModel == Settings.MODEL.CLIP) or (selModel == Settings.MODEL.FLAT)
         local lbl = win:Find("LblDscThreshold")
         if lbl then
-            lbl.Text = isClip and "Soglia (clip):" or "Soglia (sec):"
+            lbl.Text = isClip and T("Soglia (clip):") or T("Soglia (sec):")
         end
     end
 
@@ -887,7 +888,7 @@ local function buildWindow(db)
             it.Text[4] = (e.utilMin and e.utilMin > 0) and (tostring(e.utilMin) .. "s") or "—"
             it.Text[5] = e.rate and string.format("%.2f", e.rate) or "—"
             local nd = e.discounts and #e.discounts or 0
-            it.Text[6] = nd > 0 and (nd .. " soglia" .. (nd > 1 and "e" or "")) or "—"
+            it.Text[6] = nd > 0 and string.format(nd == 1 and T("%d soglia") or T("%d soglie"), nd) or "—"
             it.Text[7] = e.audioExcess and "✓" or "—"
             tree:AddTopLevelItem(it)
         end
@@ -930,8 +931,8 @@ local function buildWindow(db)
 
     -- Inizializza tab
     local tabs = win:Find("MainTabs")
-    tabs:AddTab("📋  Banche Dati")
-    tabs:AddTab("💾  Memorie")
+    tabs:AddTab(T("📋  Banche Dati"))
+    tabs:AddTab(T("💾  Memorie"))
 
     -- setFormReadOnly(bool): abilita/disabilita tutti i campi del form.
     -- readonly=true  → visione (click su riga lista); readonly=false → modifica/nuova banca.
@@ -1089,7 +1090,7 @@ local function buildWindow(db)
     end
 
     win.On.CurrencyCombo.CurrentIndexChanged = function(ev)
-        local sel = Settings.CURRENCIES[win:Find("CurrencyCombo").CurrentIndex + 1]
+        local sel = curOptions[win:Find("CurrencyCombo").CurrentIndex + 1]
         if not sel then return end
         if sel.code == Settings.code() then return end   -- nessun cambio reale
 
@@ -1145,7 +1146,7 @@ local function buildWindow(db)
     win.On.BtnReadme.Clicked = function(ev)
         local sep  = package.config:sub(1,1)
         local dir  = getConfigPath():match("^(.+)[/\\][^/\\]+$") or "."
-        local path = dir .. sep .. "RepertoireDB_README.txt"
+        local path = Settings.readmeFor(dir, sep)
         if sep == "\\" then
             os.execute('start "" "' .. path .. '"')
         else
@@ -1166,8 +1167,9 @@ local function buildWindow(db)
         local sel = win:Find("DiscountList"):CurrentItem()
         if sel then
             for i, d in ipairs(currentDiscounts) do
-                local label = d.threshold_clips and ("Oltre " .. d.threshold_clips .. " clip")
-                                               or  ("Oltre " .. secToLabel(d.threshold_sec))
+                local label = d.threshold_clips
+                        and string.format(T("Oltre %s clip"), d.threshold_clips)
+                        or  string.format(T("Oltre %s"), secToLabel(d.threshold_sec))
                 if label == sel.Text[0] then
                     editingDiscountIdx = i
                     win:Find("DscThreshold").Value   = d.threshold_clips or d.threshold_sec or 1
@@ -1271,8 +1273,8 @@ local function buildWindow(db)
         refreshTree()
         if resetForm then clearForm() end
         win:Find("LblStatus").Text = saved
-            and (statusOnOk or "✓ Salvato.")
-            or  "⚠ Errore scrittura file."
+            and (statusOnOk or T("✓ Salvato."))
+            or  T("⚠ Errore scrittura file.")
         return saved
     end
 
@@ -1309,7 +1311,7 @@ local function buildWindow(db)
                    (b.threshold_clips or b.threshold_sec or 0)
         end)
         refreshDiscountList()
-        doSave(false, "✓ Sconto aggiunto e salvato.")
+        doSave(false, T("✓ Sconto aggiunto e salvato."))
     end
 
     win.On.BtnDscDelete.Clicked = function(ev)
@@ -1319,7 +1321,7 @@ local function buildWindow(db)
             refreshDiscountList()
             -- Salva subito la banca senza lo sconto eliminato
             if editingIndex then
-                doSave(false, "✓ Sconto rimosso e salvato.")
+                doSave(false, T("✓ Sconto rimosso e salvato."))
             end
         else
             win:Find("LblStatus").Text  = T("⚠ Seleziona uno sconto dalla lista.")
@@ -1328,7 +1330,7 @@ local function buildWindow(db)
 
     win.On.BtnSave.Clicked = function(ev)
         local success, errMsg = pcall(function()
-            doSave(true, "✓ Salvato.")
+            doSave(true, T("✓ Salvato."))
         end)
         if not success then
             print("RepertoireDB Config — BtnSave error: " .. tostring(errMsg))

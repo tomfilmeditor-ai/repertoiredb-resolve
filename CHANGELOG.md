@@ -1,5 +1,62 @@
 # RepertoireDB — Changelog
 
+## [1.4.1] — 2026-11-13
+
+### La traduzione inglese era incompleta
+
+La 1.4.0 diceva di avere l'interfaccia in inglese. Aprendola in Resolve per la
+prima volta, pezzi evidenti erano rimasti in italiano: i nomi delle schede del
+Config, le voci dei menu a tendina del Calculator, i nomi delle valute, e il
+pulsante Guida apriva il manuale italiano.
+
+**Causa**: l'estrattore delle stringhe cercava solo i testi scritti nel
+costruttore dei widget (`Text=`, `ToolTip=`, `WindowTitle=`) e i primi argomenti
+di `string.format`. Non vedeva le schede (`AddTab`), le voci dei menu
+(`AddItem`), i testi assegnati a runtime (`.Text = cond and "…" or "…"`) né le
+stringhe composte da più pezzi. È la stessa famiglia di difetto del CSV
+corretto nella 1.4.0, e per la stessa ragione: **cercare per forma invece che
+per destinazione.**
+
+**Tradotte 77 stringhe che mancavano**, portando il totale da 203 a 280:
+
+- nomi delle schede del Config (`📋 Archives`, `💾 Saved sets`)
+- tutte le voci dei menu a tendina: ordinamento del Calculator, formato e
+  ordine nel dialogo di esportazione
+- **nomi delle valute** (`US dollar` invece di `Dollaro USA`) e la voce
+  `Automatic — English` del menu lingua
+- l'etichetta della soglia, che veniva **riscritta a runtime** quando si cambia
+  modello e tornava in italiano sopra l'etichetta tradotta
+- la colonna Dettaglio del Calculator per intero, comprese le abbreviazioni
+  (`1 use`, `12s src`, `3blk×30s`, `flat fee`)
+- le intestazioni di sezione del CSV del preventivo rimaste
+- tutti i messaggi di errore dei caricatori di file, che arrivano alla barra di
+  stato
+- i messaggi del Monitor
+
+**Il pulsante Guida apre ora il manuale nella lingua in uso.** Nuovo file
+`RepertoireDB_README_EN.txt`, manuale inglese completo. Se non c'è, si ripiega
+sull'italiano: meglio un manuale nella lingua sbagliata che nessun manuale.
+
+### Corretto — la finestra del Config era troppo stretta
+
+Il menu Lingua della 1.4.0 aggiungeva ~245 px alla riga in alto, che arriva a
+~910 px di larghezza minima, in una finestra da 920 di default e 900 di minimo.
+Entrava per un pelo e al minimo non entrava. Ora 1010 × 820, minimo 990.
+
+### Plurali corretti anche nel Config
+
+`"%d soglia" .. (n > 1 and "e")` era costruito attaccando una lettera, come i
+cinque casi già corretti nella 1.4.0. Ora due frasi complete.
+
+### Limite documentato, non corretto
+
+**Il CSV di esportazione delle banche dati non contiene l'utilizzo minimo.**
+Esportare e reimportare un database **perde** i valori di utilizzo minimo, in
+silenzio. Il formato CSV non ha quella colonna, né in scrittura né in lettura.
+Aggiungerla significa cambiare un formato pubblico già distribuito, quindi non
+si fa in una versione di correzione. Nel frattempo è scritto nel manuale, e chi
+vuole una copia fedele del database usa le **Memorie** invece del CSV.
+
 ## [1.4.0] — 2026-10-30
 
 ### Interfaccia in inglese, con rilevazione automatica dalla lingua di sistema

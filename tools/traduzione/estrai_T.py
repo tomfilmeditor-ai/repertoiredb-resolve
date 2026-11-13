@@ -9,6 +9,7 @@ da indovinare: le stringhe traducibili sono esattamente gli argomenti di T.
 Uso:  python3 estrai_T.py > stringhe.json
 """
 import json
+import os
 import re
 import sys
 from collections import OrderedDict
@@ -22,6 +23,18 @@ FILES = OrderedDict([
     ("calculator", "RepertoireDB_Calculator.lua"),
     ("monitor",    "RepertoireDB_Monitor.lua"),
 ])
+
+# Settings.lua sta in un'altra cartella e traduce in due modi che le tre
+# regole qui sotto coprono: chiamate diritte a Settings.t("..."), e i nomi
+# delle valute, che arrivano a Settings.t come variabile e quindi non si
+# vedono come letterale nel punto della chiamata.
+MODULI = OrderedDict([
+    ("settings", Path(os.path.expanduser(
+        "~/Library/Application Support/Blackmagic Design/DaVinci Resolve/"
+        "Fusion/Modules/Lua/Settings.lua"))),
+])
+RE_ST   = re.compile(r'Settings\.t\(\s*"((?:[^"\\]|\\.)*)"')
+RE_NOME = re.compile(r'\bnome\s*=\s*"((?:[^"\\]|\\.)*)"')
 
 # T("...") — un solo argomento, un letterale fra virgolette doppie.
 RE_T = re.compile(r'\bT\(\s*"((?:[^"\\]|\\.)*)"\s*\)')
@@ -81,6 +94,31 @@ def main():
             if fmt and not dedup[raw]["formattata"]:
                 dedup[raw]["formattata"] = True
                 dedup[raw]["placeholders"] = RE_PH.findall(raw)
+        per_file[key] = n
+
+    # moduli condivisi
+    for key, path in MODULI.items():
+        if not path.exists():
+            print(f"MANCA: {path}", file=sys.stderr)
+            continue
+        text = path.read_text(encoding="utf-8")
+        n = 0
+        for pat in (RE_T, RE_ST, RE_NOME):
+            for m in pat.finditer(text):
+                raw = m.group(1)
+                line = text[:m.start()].count("\n") + 1
+                n += 1
+                if raw not in dedup:
+                    dedup[raw] = {
+                        "string": raw,
+                        "formattata": dentro_format(text, m.start()),
+                        "placeholders": [],
+                        "multiline": "\\n" in raw,
+                        "where": [],
+                    }
+                    if dedup[raw]["formattata"]:
+                        dedup[raw]["placeholders"] = RE_PH.findall(raw)
+                dedup[raw]["where"].append(f"{path.name}:{line}")
         per_file[key] = n
 
     print(json.dumps({

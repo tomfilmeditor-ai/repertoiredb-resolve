@@ -26,6 +26,7 @@ GRUPPI = [
     ("RepertoireDB_Config.lua", "Config — configurazione delle banche dati"),
     ("RepertoireDB_Calculator.lua", "Calculator — calcolo dei costi"),
     ("RepertoireDB_Monitor.lua", "Monitor — finestra di controllo"),
+    ("Settings.lua", "Settings — valute e lingua (modulo condiviso)"),
 ]
 
 

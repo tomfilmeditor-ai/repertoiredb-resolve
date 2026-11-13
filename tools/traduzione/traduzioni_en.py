@@ -320,6 +320,108 @@ EN = {
     "File,Tipo,Banca Dati,Modello,Src In,Src Out,Durata Sorgente,Rec TC In,Rec TC Out,Durata Montato,Costo Segmento %s,Note":
         "File,Type,Archive,Model,Src In,Src Out,Source duration,Rec TC In,Rec TC Out,Edited duration,Segment cost %s,Notes",
 
+    # ── Config — schede, etichette dinamiche, messaggi ───────────────────
+    # Queste erano sfuggite alla prima estrazione: le schede si creano con
+    # AddTab e le voci dei menu con AddItem, non con Text=.
+    "📋  Banche Dati": "📋  Archives",
+    "💾  Memorie":     "💾  Saved sets",
+    # L'etichetta della soglia cambia a runtime secondo il modello
+    "Soglia (clip):": "Threshold (clips):",
+    "%d soglia":  "%d threshold",
+    "%d soglie":  "%d thresholds",
+    "Oltre %s":   "Over %s",
+    "✓ Salvato.": "✓ Saved.",
+    "⚠ Errore scrittura file.":   "⚠ Could not write the file.",
+    "✓ Sconto aggiunto e salvato.": "✓ Discount added and saved.",
+    "✓ Sconto rimosso e salvato.":  "✓ Discount removed and saved.",
+    "⚠  Nessuna clip aggiornata.":  "⚠  No clips updated.",
+    "  — seleziona il prossimo gruppo.": "  — select the next group.",
+    "Nessun progetto aperto in DaVinci Resolve.":
+        "No project open in DaVinci Resolve.",
+    # errori dei caricatori, mostrati nella barra di stato
+    "File non trovato: ":  "File not found: ",
+    "File non trovato":    "File not found",
+    "JSON non valido: ":   "Invalid JSON: ",
+    "JSON corrotto: ":     "Corrupted JSON: ",
+    "Formato JSON non valido":  "Invalid JSON format",
+    "Formato non riconosciuto": "Unrecognised format",
+    "CSV vuoto o senza dati":   "The CSV is empty or has no data",
+    "Nessuna voce valida trovata nel CSV":
+        "No valid entries found in the CSV",
+    "Impossibile scrivere il file": "Could not write the file",
+
+    # ── Calculator — colonna Dettaglio, abbreviata per stare in colonna ───
+    "da definire":        "to be agreed",
+    "1 utilizzo":         "1 use",
+    "%ds sorg":           "%ds src",
+    "%dbl×%ds":           "%dblk×%ds",
+    "%dmin":              "%dmin",
+    "forfait":            "flat fee",
+    "%s clip":            "%s clips",
+    "1 utilizzo (flat)":  "1 use (flat)",
+    "compreso nel forfait": "included in the flat fee",
+    "=⚠RIPETUTO":         "=⚠REUSED",
+    "(+%sunici)":         "(+%s unique)",
+    "  [lordo %s]":       "  [gross %s]",
+    "%d clip":            "%d clips",
+    "%d clip tot.":       "%d clips total",
+    "  · 50% tariffa piena · no sconti":
+        "  · 50% of full rate · no discounts",
+    "  · audio eccedente %s": "  · excess audio %s",
+    "DETTAGLIO PER BANCA":  "BREAKDOWN BY ARCHIVE",
+    "DETTAGLIO — ORDINE DI MONTAGGIO": "BREAKDOWN — EDIT ORDER",
+    "⚠ RIPETUTO — non conteggiato": "⚠ REUSED — not counted",
+    "src: ": "src: ",
+    "   ⚠ Ancora da definire i costi di: ":
+        "   ⚠ Costs still to be agreed for: ",
+    "⚠ Tag non trovati in config: ":
+        "⚠ Tags not found in the configuration: ",
+
+    # ── Calculator — menu a tendina ──────────────────────────────────────
+    "Per banca":            "By archive",
+    "Per banca dati":       "By archive",
+    "Ordine di montaggio":  "Edit order",
+    "CSV (.csv)":           "CSV (.csv)",
+    "Excel (.xlsx)  — richiede Python + openpyxl":
+        "Excel (.xlsx)  — requires Python + openpyxl",
+
+    # ── Calculator — sezioni del CSV del preventivo ──────────────────────
+    "SUBTOTALE VIDEO":            "VIDEO SUBTOTAL",
+    "SUBTOTALE %s":               "%s SUBTOTAL",
+    "clip":                       "clips",
+    "50%% tariffa piena - no sconti":
+        "50%% of full rate - no discounts",
+    "SUBTOTALE AUDIO ECCEDENTE":  "EXCESS AUDIO SUBTOTAL",
+    "TOTALE GENERALE":            "GRAND TOTAL",
+    "Costo da definire — non incluso nel totale":
+        "Rate to be agreed — not included in the total",
+    "incluso nel primo utilizzo": "included in the first use",
+    "Subtotale segmenti: %s":     "Segment subtotal: %s",
+    "Esportazione annullata":     "Export canceled",
+    "Impossibile scrivere in: ":  "Cannot write to: ",
+    "README non trovato: ":       "README not found: ",
+
+    # ── Monitor — messaggi ───────────────────────────────────────────────
+    "Nessun progetto aperto":         "No project open",
+    "Nessuna timeline attiva":        "No active timeline",
+    "Nessuna banca dati configurata": "No archives configured",
+    "Errore sconosciuto":             "Unknown error",
+    " clip":                          " clips",
+    ": nessun segmento":              ": no segments",
+
+    # ── Settings — nomi delle valute e voce automatica della lingua ──────
+    # Il codice ISO e il simbolo restano, si traduce solo il nome.
+    "Euro":                "Euro",
+    "Dollaro USA":         "US dollar",
+    "Sterlina":            "Pound sterling",
+    "Franco svizzero":     "Swiss franc",
+    "Dollaro canadese":    "Canadian dollar",
+    "Dollaro australiano": "Australian dollar",
+    "Yuan cinese":         "Chinese yuan",
+    "Yen giapponese":      "Japanese yen",
+    "Won coreano":         "Korean won",
+    "Automatico — %s":     "Automatic — %s",
+
     # ── Monitor ──────────────────────────────────────────────────────────
     "RepertoireDB v%s — Monitor": "RepertoireDB v%s — Monitor",
     "Clicca su una banca per selezionarne i segmenti in timeline":

@@ -5,7 +5,7 @@ Legge la timeline e dice quanto costa il repertorio che c'è dentro.
 
 🇬🇧 [Read in English](README.md)
 
-![Versione](https://img.shields.io/badge/versione-1.4.0-blue)
+![Versione](https://img.shields.io/badge/versione-1.4.1-blue)
 ![Lingua](https://img.shields.io/badge/interfaccia-Italiano%20%7C%20English-blue)
 ![Sistema](https://img.shields.io/badge/sistema-macOS%20%7C%20Windows-lightgrey)
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)

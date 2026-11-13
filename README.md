@@ -5,7 +5,7 @@ Reads your timeline and works out what the archive material in it will cost.
 
 🇮🇹 [Leggi in italiano](README.it.md)
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.1-blue)
 ![Language](https://img.shields.io/badge/interface-English%20%7C%20Italiano-blue)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
 ![Resolve](https://img.shields.io/badge/DaVinci%20Resolve-Studio%2019%2F20-orange)

@@ -82,7 +82,8 @@ mkdir -p "$STAGE/payload/RepertoireDB/Templates" "$STAGE/payload/Modules_Lua"
 
 # Script eseguibili + documentazione (vanno in Fusion/Scripts/Comp/RepertoireDB/)
 for f in RepertoireDB_Config.lua RepertoireDB_Calculator.lua RepertoireDB_Monitor.lua \
-         RepertoireDB_Installer.lua RepertoireDB_xlsx.py RepertoireDB_README.txt \
+         RepertoireDB_Installer.lua RepertoireDB_xlsx.py \
+         RepertoireDB_README.txt RepertoireDB_README_EN.txt \
          CHANGELOG.md LICENSE.md; do
     cp "$SRC_SCRIPTS/$f" "$STAGE/payload/RepertoireDB/"
 done

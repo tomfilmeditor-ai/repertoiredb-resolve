@@ -38,17 +38,29 @@ local DEFAULT_LANG   = "it"
 -- due valute condividono il simbolo (¥ per cinese e giapponese, $ per
 -- statunitense, canadese e australiano): nel menu si legge il codice,
 -- nell'interfaccia compare il simbolo.
+-- Il codice ISO e il simbolo non si traducono. Il nome sì: con l'interfaccia
+-- in inglese "Dollaro USA" in un menu per il resto inglese stona.
 Settings.CURRENCIES = {
-    { code = "EUR", symbol = "€",   label = "EUR  €   Euro" },
-    { code = "USD", symbol = "$",   label = "USD  $   Dollaro USA" },
-    { code = "GBP", symbol = "£",   label = "GBP  £   Sterlina" },
-    { code = "CHF", symbol = "CHF", label = "CHF      Franco svizzero" },
-    { code = "CAD", symbol = "CA$", label = "CAD  CA$ Dollaro canadese" },
-    { code = "AUD", symbol = "A$",  label = "AUD  A$  Dollaro australiano" },
-    { code = "CNY", symbol = "¥",   label = "CNY  ¥   Yuan cinese" },
-    { code = "JPY", symbol = "¥",   label = "JPY  ¥   Yen giapponese" },
-    { code = "KRW", symbol = "₩",   label = "KRW  ₩   Won coreano" },
+    { code = "EUR", symbol = "€",   pad = "€   ", nome = "Euro" },
+    { code = "USD", symbol = "$",   pad = "$   ", nome = "Dollaro USA" },
+    { code = "GBP", symbol = "£",   pad = "£   ", nome = "Sterlina" },
+    { code = "CHF", symbol = "CHF", pad = "    ", nome = "Franco svizzero" },
+    { code = "CAD", symbol = "CA$", pad = "CA$ ", nome = "Dollaro canadese" },
+    { code = "AUD", symbol = "A$",  pad = "A$  ", nome = "Dollaro australiano" },
+    { code = "CNY", symbol = "¥",   pad = "¥   ", nome = "Yuan cinese" },
+    { code = "JPY", symbol = "¥",   pad = "¥   ", nome = "Yen giapponese" },
+    { code = "KRW", symbol = "₩",   pad = "₩   ", nome = "Won coreano" },
 }
+
+-- Le voci del menu valuta, col nome nella lingua in uso.
+function Settings.currencyOptions()
+    local out = {}
+    for i, c in ipairs(Settings.CURRENCIES) do
+        out[i] = { code = c.code, symbol = c.symbol,
+                   label = c.code .. "  " .. c.pad .. Settings.t(c.nome) }
+    end
+    return out
+end
 
 -- Dichiarata qui perché systemLang() la consulta, ma il suo contenuto è
 -- definito più sotto: in Lua una variabile locale non è visibile alle
@@ -291,7 +303,8 @@ function Settings.languageOptions()
     for _, l in ipairs(Settings.LANGUAGES) do
         if l.code == sys then name = l.label end
     end
-    local out = { { code = "auto", label = "Automatico — " .. name } }
+    local out = { { code = "auto",
+                    label = string.format(Settings.t("Automatico — %s"), name) } }
     for _, l in ipairs(Settings.LANGUAGES) do
         out[#out + 1] = { code = l.code, label = l.label }
     end
@@ -359,6 +372,20 @@ end
 function Settings.indexOf(values, value)
     for i, v in ipairs(values) do if v == value then return i end end
     return 1
+end
+
+-- ── Manuale nella lingua in uso ──────────────────────────────────
+-- Il pulsante Guida apriva sempre il manuale italiano. Con l'interfaccia in
+-- inglese si cerca prima la versione inglese e, se non c'è, si ripiega
+-- sull'italiano: meglio un manuale nella lingua sbagliata che nessun manuale.
+function Settings.readmeFor(dir, sep)
+    sep = sep or package.config:sub(1,1)
+    if Settings.lang() ~= DEFAULT_LANG then
+        local p = dir .. sep .. "RepertoireDB_README_EN.txt"
+        local f = io.open(p, "r")
+        if f then f:close(); return p end
+    end
+    return dir .. sep .. "RepertoireDB_README.txt"
 end
 
 -- ── Traduzione del testo dell'interfaccia ────────────────────────
